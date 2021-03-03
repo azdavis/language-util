@@ -54,3 +54,4 @@ around) into a cheap, integer-sized ID, and also convert that ID back into a
 URI.
 
 [c0ls]: https://github.com/azdavis/c0ls
+[ungrammar]: https://github.com/rust-analyzer/ungrammar
