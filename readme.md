@@ -10,7 +10,7 @@ language servers.
 
 A helper function that gives an English name to some characters.
 
-### `event-parse`
+## `event-parse`
 
 A generic framework for writing event-based parsers. Such parsers are ones that
 take as input a flat list of tokens, and produce as output a flat list of
@@ -24,30 +24,30 @@ of tokens:
 This also lets us handle trivia (whitespace, comments) in one place rather than
 all over the parser.
 
-### `identifier-case`
+## `identifier-case`
 
 Conversions between various identifier cases, like `snake_case` and
 `PascalCase`.
 
-### `syntax-gen`
+## `syntax-gen`
 
 Generates Rust code from an [ungrammar][].
 
-### `text-pos`
+## `text-pos`
 
 Allows translating between byte indices and line-and-character positions in a
 string.
 
-### `topo-sort`
+## `topo-sort`
 
 Generic topological sorting. Useful for when you have many interdependent things
 and would like to know what order to process them in.
 
-### `unwrap-or`
+## `unwrap-or`
 
 The macro form of `Option::unwrap_or`.
 
-### `uri-db`
+## `uri-db`
 
 A database of URIs. Allows us to turn a URI (heap-allocated, expensive to pass
 around) into a cheap, integer-sized ID, and also convert that ID back into a
