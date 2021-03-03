@@ -1,4 +1,4 @@
-//! A database of URIs of C0 source files.
+//! A database of URIs.
 //!
 //! This depends on the `url` crate, but we call them "URIs". Basically, we're
 //! just following what `lsp-types` calls them.
