@@ -1,0 +1,6 @@
+usage:
+  cargo xtask <command>
+
+commands:
+  ci
+    check the repo for validity

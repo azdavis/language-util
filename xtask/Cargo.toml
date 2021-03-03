@@ -1,0 +1,11 @@
+[package]
+name = "xtask"
+version = "0.1.0"
+authors = ["Ariel Davis <ariel.z.davis@icloud.com>"]
+edition = "2018"
+publish = false
+
+[dependencies]
+anyhow = "1"
+pico-args = "0.4"
+xshell = "0.1"
