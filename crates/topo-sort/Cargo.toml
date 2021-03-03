@@ -1,0 +1,11 @@
+[package]
+name = "topo-sort"
+version = "0.1.0"
+authors = ["Ariel Davis <ariel.z.davis@icloud.com>"]
+edition = "2018"
+
+[lib]
+doctest = false
+
+[dev-dependencies]
+maplit = "1"
