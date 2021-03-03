@@ -10,7 +10,6 @@ mod alt;
 mod seq;
 mod token;
 mod util;
-mod write;
 
 pub use token::TokenKind;
 
@@ -230,7 +229,7 @@ where
 
     #(#types)*
   };
-  write::write_rust_file("src/kind.rs", kind.to_string().as_ref())?;
-  write::write_rust_file("src/ast.rs", ast.to_string().as_ref())?;
+  util::write_rust_file("src/kind.rs", kind.to_string().as_ref())?;
+  util::write_rust_file("src/ast.rs", ast.to_string().as_ref())?;
   Ok(())
 }
