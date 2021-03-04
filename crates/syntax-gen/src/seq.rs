@@ -73,26 +73,6 @@ fn field<'cx>(
   }
 }
 
-fn token_field<'cx>(
-  cx: &'cx Cx,
-  counts: &mut Counts<&'cx str>,
-  name: Option<&str>,
-  token: Token,
-) -> TokenStream {
-  let kind = cx.tokens.name(token);
-  let name = match name {
-    None => ident(&pascal_to_snake(kind)),
-    Some(x) => ident(x),
-  };
-  let idx = get_idx(counts, kind);
-  let kind = ident(kind);
-  quote! {
-    pub fn #name(&self) -> Option<SyntaxToken> {
-      token(self, SK::#kind, #idx)
-    }
-  }
-}
-
 fn labeled_field<'cx>(
   cx: &'cx Cx,
   counts: &mut Counts<&'cx str>,
@@ -149,6 +129,26 @@ fn node_field<'cx>(
   quote! {
     pub fn #name_ident(&self) -> #ret_ty {
       #body
+    }
+  }
+}
+
+fn token_field<'cx>(
+  cx: &'cx Cx,
+  counts: &mut Counts<&'cx str>,
+  name: Option<&str>,
+  token: Token,
+) -> TokenStream {
+  let kind = cx.tokens.name(token);
+  let name = match name {
+    None => ident(&pascal_to_snake(kind)),
+    Some(x) => ident(x),
+  };
+  let idx = get_idx(counts, kind);
+  let kind = ident(kind);
+  quote! {
+    pub fn #name(&self) -> Option<SyntaxToken> {
+      token(self, SK::#kind, #idx)
     }
   }
 }
