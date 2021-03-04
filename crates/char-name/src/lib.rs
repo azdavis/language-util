@@ -7,6 +7,7 @@
 /// Returns the name of the given character, or None if it is unknown.
 pub fn get_opt(c: char) -> Option<&'static str> {
   let ret = match c {
+    '_' => "Underscore",
     '-' => "Minus",
     ',' => "Comma",
     ';' => "Semicolon",
