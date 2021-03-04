@@ -4,8 +4,8 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
-/// Returns the name of the given character.
-pub fn get(c: char) -> Option<&'static str> {
+/// Returns the name of the given character, or None if it is unknown.
+pub fn get_opt(c: char) -> Option<&'static str> {
   let ret = match c {
     '-' => "Minus",
     ',' => "Comma",
@@ -34,4 +34,12 @@ pub fn get(c: char) -> Option<&'static str> {
     _ => return None,
   };
   Some(ret)
+}
+
+/// Returns the name of the given character, or panics if it is unknown.
+pub fn get(c: char) -> &'static str {
+  match get_opt(c) {
+    Some(s) => s,
+    None => panic!("don't know the name for {}", c),
+  }
 }
