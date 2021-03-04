@@ -32,6 +32,8 @@ enum Kind {
 /// and `name` is the name of the token, to be used as an enum variant in the
 /// generated `SyntaxKind`.
 ///
+/// `trivia` is a list of all the `SyntaxKind`s which should be made as trivia.
+///
 /// The generated Rust files will depend on `rowan` and `event-parse`. The files
 /// will be formatted with rustfmt.
 ///
@@ -45,7 +47,12 @@ enum Kind {
 /// Returns `Err` if the files could not be written. Panics if certain
 /// properties about `grammar` do not hold. (Read the source/panic messages to
 /// find out what they are.)
-pub fn gen<F>(lang: &str, grammar: Grammar, get_token: F) -> std::io::Result<()>
+pub fn gen<F>(
+  lang: &str,
+  trivia: &[&str],
+  grammar: Grammar,
+  get_token: F,
+) -> std::io::Result<()>
 where
   F: Fn(&str) -> (TokenKind, String),
 {
@@ -53,7 +60,8 @@ where
   let tokens = token::TokenDb::new(&grammar, get_token);
   let cx = Cx { grammar, tokens };
   let mut types = Vec::new();
-  let mut syntax_kinds = Vec::new();
+  let trivia: Vec<_> = trivia.iter().map(|&x| ident(x)).collect();
+  let mut syntax_kinds = trivia.clone();
   for node in cx.grammar.iter() {
     let data = &cx.grammar[node];
     let name = ident(&data.name);
@@ -115,6 +123,9 @@ where
       let kind = util::ident(name);
       quote! { Self::#kind => #desc }
     }));
+  let self_trivia = trivia.iter().map(|id| {
+    quote! { Self::#id }
+  });
   let new_syntax_kinds = keywords
     .iter()
     .cloned()
@@ -127,10 +138,6 @@ where
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[repr(u16)]
     pub enum SyntaxKind {
-      Whitespace,
-      LineComment,
-      BlockComment,
-      Invalid,
       #(#syntax_kinds ,)*
     }
 
@@ -158,13 +165,7 @@ where
 
     impl event_parse::Triviable for SyntaxKind {
       fn is_trivia(&self) -> bool {
-        matches!(
-          *self,
-          Self::Whitespace
-          | Self::LineComment
-          | Self::BlockComment
-          | Self::Invalid
-        )
+        matches!(*self, #(#self_trivia)|*)
       }
     }
 
