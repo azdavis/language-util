@@ -46,8 +46,8 @@ where
 }
 
 enum Modifier {
-  Rep,
-  Opt,
+  Repeated,
+  Optional,
   Regular,
 }
 
@@ -63,12 +63,16 @@ fn field<'cx>(
     Rule::Node(node) => node_field(cx, counts, Modifier::Regular, None, *node),
     Rule::Token(tok) => token_field(cx, counts, None, *tok),
     Rule::Opt(r) => match r.as_ref() {
-      Rule::Node(node) => node_field(cx, counts, Modifier::Opt, None, *node),
+      Rule::Node(node) => {
+        node_field(cx, counts, Modifier::Optional, None, *node)
+      }
       // tokens are already optional, so whatever
       Rule::Token(tok) => token_field(cx, counts, None, *tok),
       _ => panic!("bad optional rule {:?}", r),
     },
-    Rule::Rep(r) => node_field(cx, counts, Modifier::Rep, None, unwrap_node(r)),
+    Rule::Rep(r) => {
+      node_field(cx, counts, Modifier::Repeated, None, unwrap_node(r))
+    }
     Rule::Alt(_) | Rule::Seq(_) => panic!("bad field rule {:?}", rule),
   }
 }
@@ -85,7 +89,7 @@ fn labeled_field<'cx>(
     }
     Rule::Token(tok) => token_field(cx, counts, Some(label), *tok),
     Rule::Opt(r) => {
-      node_field(cx, counts, Modifier::Opt, Some(label), unwrap_node(r))
+      node_field(cx, counts, Modifier::Optional, Some(label), unwrap_node(r))
     }
     Rule::Labeled { .. } | Rule::Seq(_) | Rule::Alt(_) | Rule::Rep(_) => {
       panic!("bad labeled field rule {:?}", rule)
@@ -115,12 +119,12 @@ fn node_field<'cx>(
   let ret_ty;
   let body;
   match modifier {
-    Modifier::Rep => {
+    Modifier::Repeated => {
       name_ident = format_ident!("{}s", name);
       ret_ty = quote! { impl Iterator<Item = #kind> };
       body = quote! { children(self) };
     }
-    Modifier::Opt | Modifier::Regular => {
+    Modifier::Optional | Modifier::Regular => {
       name_ident = ident(name);
       ret_ty = quote! { Option<#kind> };
       body = quote! { children(self).nth(#idx) };
