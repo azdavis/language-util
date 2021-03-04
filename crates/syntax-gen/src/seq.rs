@@ -62,7 +62,12 @@ fn field<'cx>(
     }
     Rule::Node(node) => node_field(cx, counts, Modifier::Regular, None, *node),
     Rule::Token(tok) => token_field(cx, counts, None, *tok),
-    Rule::Opt(r) => node_field(cx, counts, Modifier::Opt, None, unwrap_node(r)),
+    Rule::Opt(r) => match r.as_ref() {
+      Rule::Node(node) => node_field(cx, counts, Modifier::Opt, None, *node),
+      // tokens are already optional, so whatever
+      Rule::Token(tok) => token_field(cx, counts, None, *tok),
+      _ => panic!("bad optional rule {:?}", r),
+    },
     Rule::Rep(r) => node_field(cx, counts, Modifier::Rep, None, unwrap_node(r)),
     Rule::Alt(_) | Rule::Seq(_) => panic!("bad field rule {:?}", rule),
   }
