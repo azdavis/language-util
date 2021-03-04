@@ -50,11 +50,11 @@ impl TokenDb {
 
   pub(crate) fn name(&self, token: Token) -> &str {
     if let Some(x) = self.punctuation.get(&token) {
-      x.as_ref()
+      x.as_str()
     } else if let Some(x) = self.keywords.get(&token) {
-      x.as_ref()
+      x.as_str()
     } else if let Some(&(ref x, _)) = self.special.get(&token) {
-      x.as_ref()
+      x.as_str()
     } else {
       panic!("{:?} does not have a name", token)
     }
