@@ -207,7 +207,7 @@ where
       fn syntax(&self) -> &SyntaxNode;
     }
 
-    fn token<P>(parent: &P, kind: SK, idx: usize) -> Option<SyntaxToken>
+    fn tokens<P>(parent: &P, kind: SK) -> impl Iterator<Item = SyntaxToken>
     where
       P: Syntax,
     {
@@ -216,7 +216,6 @@ where
         .children_with_tokens()
         .filter_map(rowan::NodeOrToken::into_token)
         .filter(move |tok| tok.kind() == kind)
-        .nth(idx)
     }
 
     fn children<P, C>(parent: &P) -> impl Iterator<Item = C>

@@ -148,7 +148,7 @@ fn token_field<'cx>(
   let kind = ident(kind);
   quote! {
     pub fn #name(&self) -> Option<SyntaxToken> {
-      token(self, SK::#kind, #idx)
+      tokens(self, SK::#kind).nth(#idx)
     }
   }
 }
