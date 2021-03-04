@@ -1,9 +1,9 @@
-use crate::util::{ident, unwrap_node, Cx};
+use crate::util::{ident, Cx};
 use identifier_case::pascal_to_snake;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use std::hash::Hash;
-use ungrammar::{Node, Rule, Token};
+use ungrammar::Rule;
 
 pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
   let mut counts = Counts::default();
@@ -45,114 +45,90 @@ where
   ret
 }
 
+#[derive(Debug)]
 enum Modifier {
+  Regular,
   Repeated,
   Optional,
-  Regular,
+}
+
+impl Modifier {
+  fn is_regular(&self) -> bool {
+    matches!(self, Self::Regular)
+  }
 }
 
 fn field<'cx>(
   cx: &'cx Cx,
   counts: &mut Counts<&'cx str>,
-  rule: &Rule,
+  mut rule: &Rule,
 ) -> TokenStream {
-  match rule {
-    Rule::Labeled { label, rule } => {
-      labeled_field(cx, counts, label.as_str(), rule)
-    }
-    Rule::Node(node) => node_field(cx, counts, Modifier::Regular, None, *node),
-    Rule::Token(tok) => token_field(cx, counts, None, *tok),
-    Rule::Opt(r) => match r.as_ref() {
+  let mut modifier = Modifier::Regular;
+  let mut label: Option<&str> = None;
+  let name: &str;
+  let base_ty: Ident;
+  let base_body: TokenStream;
+  loop {
+    match rule {
       Rule::Node(node) => {
-        node_field(cx, counts, Modifier::Optional, None, *node)
+        name = cx.grammar[*node].name.as_str();
+        base_ty = ident(name);
+        base_body = quote! { children(self) };
+        break;
       }
-      // tokens are already optional, so whatever
-      Rule::Token(tok) => token_field(cx, counts, None, *tok),
-      _ => panic!("bad optional rule {:?}", r),
-    },
-    Rule::Rep(r) => {
-      node_field(cx, counts, Modifier::Repeated, None, unwrap_node(r))
-    }
-    Rule::Alt(_) | Rule::Seq(_) => panic!("bad field rule {:?}", rule),
-  }
-}
-
-fn labeled_field<'cx>(
-  cx: &'cx Cx,
-  counts: &mut Counts<&'cx str>,
-  label: &str,
-  rule: &Rule,
-) -> TokenStream {
-  match rule {
-    Rule::Node(node) => {
-      node_field(cx, counts, Modifier::Regular, Some(label), *node)
-    }
-    Rule::Token(tok) => token_field(cx, counts, Some(label), *tok),
-    Rule::Opt(r) => {
-      node_field(cx, counts, Modifier::Optional, Some(label), unwrap_node(r))
-    }
-    Rule::Labeled { .. } | Rule::Seq(_) | Rule::Alt(_) | Rule::Rep(_) => {
-      panic!("bad labeled field rule {:?}", rule)
+      Rule::Token(tok) => {
+        name = cx.tokens.name(*tok);
+        base_ty = ident("SyntaxToken");
+        let name_ident = ident(name);
+        base_body = quote! { tokens(self, SK::#name_ident) };
+        break;
+      }
+      Rule::Labeled { label: l, rule: r } => {
+        if let Some(old) = label {
+          panic!("already have label {}, cannot have new label {}", old, l);
+        }
+        label = Some(l.as_str());
+        rule = r.as_ref();
+      }
+      Rule::Opt(r) => {
+        assert!(modifier.is_regular(), "cannot make optional");
+        modifier = Modifier::Optional;
+        rule = r.as_ref();
+      }
+      Rule::Rep(r) => {
+        assert!(modifier.is_regular(), "cannot make repeated");
+        modifier = Modifier::Repeated;
+        rule = r.as_ref();
+      }
+      Rule::Seq(_) | Rule::Alt(_) => panic!("bad field rule: {:?}", rule),
     }
   }
-}
-
-fn node_field<'cx>(
-  cx: &'cx Cx,
-  counts: &mut Counts<&'cx str>,
-  modifier: Modifier,
-  name: Option<&str>,
-  node: Node,
-) -> TokenStream {
-  let kind = &cx.grammar[node].name;
-  let idx = get_idx(counts, kind);
-  let owned;
-  let name = match name {
+  let field_name = match label {
+    Some(x) => ident(x),
     None => {
-      owned = pascal_to_snake(kind);
-      &owned
+      let to_snake = pascal_to_snake(name);
+      match modifier {
+        Modifier::Repeated => format_ident!("{}s", to_snake),
+        Modifier::Optional | Modifier::Regular => ident(&to_snake),
+      }
     }
-    Some(x) => x,
   };
-  let kind = ident(kind);
-  let name_ident;
-  let ret_ty;
-  let body;
+  let idx = get_idx(counts, name);
+  let ret_ty: TokenStream;
+  let body: TokenStream;
   match modifier {
     Modifier::Repeated => {
-      name_ident = format_ident!("{}s", name);
-      ret_ty = quote! { impl Iterator<Item = #kind> };
-      body = quote! { children(self) };
+      ret_ty = quote! { impl Iterator<Item = #base_ty> };
+      body = base_body;
     }
     Modifier::Optional | Modifier::Regular => {
-      name_ident = ident(name);
-      ret_ty = quote! { Option<#kind> };
-      body = quote! { children(self).nth(#idx) };
+      ret_ty = quote! { Option<#base_ty> };
+      body = quote! { #base_body.nth(#idx) };
     }
-  }
-  quote! {
-    pub fn #name_ident(&self) -> #ret_ty {
-      #body
-    }
-  }
-}
-
-fn token_field<'cx>(
-  cx: &'cx Cx,
-  counts: &mut Counts<&'cx str>,
-  name: Option<&str>,
-  token: Token,
-) -> TokenStream {
-  let kind = cx.tokens.name(token);
-  let name = match name {
-    None => ident(&pascal_to_snake(kind)),
-    Some(x) => ident(x),
   };
-  let idx = get_idx(counts, kind);
-  let kind = ident(kind);
   quote! {
-    pub fn #name(&self) -> Option<SyntaxToken> {
-      tokens(self, SK::#kind).nth(#idx)
+    pub fn #field_name(&self) -> #ret_ty {
+      #body
     }
   }
 }
