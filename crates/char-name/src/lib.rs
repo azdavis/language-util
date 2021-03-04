@@ -23,6 +23,7 @@ pub fn get_opt(c: char) -> Option<&'static str> {
     '*' => "Star",
     '/' => "Slash",
     '&' => "And",
+    '#' => "Hash",
     '%' => "Percent",
     '^' => "Carat",
     '+' => "Plus",
