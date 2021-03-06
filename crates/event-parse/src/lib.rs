@@ -10,6 +10,10 @@
 //! 4. Define your language's grammar with functions operating on a [`Parser`].
 //! 5. Call [`Parser::finish`] when done, and feed it a suitable [`Sink`] for
 //!    the collected parsing events.
+//!
+//! A similar approach is used in [rust-analyzer][1].
+//!
+//! [1]: https://github.com/rust-analyzer/rust-analyzer
 
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
@@ -135,6 +139,9 @@ where
   ///
   /// Panics if there are no more tokens, i.e. if [`Self::peek`] would return
   /// `None` just prior to calling this.
+  ///
+  /// This is often used after calling [`Self::at`] to verify some expected
+  /// was is present.
   pub fn bump(&mut self) -> Token<'input, K> {
     let ret = self.peek().expect("bump with no tokens");
     self.events.push(Some(Event::Token));
