@@ -7,6 +7,7 @@
 #![deny(rust_2018_idioms)]
 
 mod alt;
+mod ptr;
 mod seq;
 mod token;
 mod util;
@@ -25,7 +26,7 @@ enum Kind {
 }
 
 /// Generates Rust code from the `grammar` of the `lang` and writes it to
-/// `src/kind.rs` and `src/ast.rs`.
+/// `src/kind.rs`, `src/ast.rs`, and `src/ptr.rs`
 ///
 /// `get_token` will be called for each token in `grammar`, and should return
 /// `(kind, name`), where `kind` is what kind of token this is (a [`TokenKind`])
@@ -43,6 +44,9 @@ enum Kind {
 ///
 /// `src/ast.rs` will contain a strongly-typed API for traversing a syntax tree
 /// for `lang`, based on the `grammar`.
+///
+/// `src/ptr.rs` will contain `AstPtr`, a 'pointer' to some AST node that is
+/// stable between re-parses of the same file.
 ///
 /// Returns `Err` if the files could not be written. Panics if certain
 /// properties about `grammar` do not hold. (Read the source/panic messages to
@@ -231,5 +235,6 @@ where
   };
   util::write_rust_file("src/kind.rs", kind.to_string().as_ref())?;
   util::write_rust_file("src/ast.rs", ast.to_string().as_ref())?;
+  util::write_rust_file("src/ptr.rs", ptr::get().to_string().as_ref())?;
   Ok(())
 }
