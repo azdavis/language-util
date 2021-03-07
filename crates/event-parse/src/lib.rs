@@ -141,7 +141,7 @@ where
   /// `None` just prior to calling this.
   ///
   /// This is often used after calling [`Self::at`] to verify some expected
-  /// was is present.
+  /// token was present.
   pub fn bump(&mut self) -> Token<'input, K> {
     let ret = self.peek().expect("bump with no tokens");
     self.events.push(Some(Event::Token));
