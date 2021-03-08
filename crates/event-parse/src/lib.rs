@@ -24,7 +24,7 @@ use drop_bomb::DropBomb;
 /// A event-based parser.
 #[derive(Debug)]
 pub struct Parser<'input, K> {
-  tokens: Vec<Token<'input, K>>,
+  tokens: &'input [Token<'input, K>],
   idx: usize,
   expected: Vec<K>,
   events: Vec<Option<Event<K>>>,
@@ -32,7 +32,7 @@ pub struct Parser<'input, K> {
 
 impl<'input, K> Parser<'input, K> {
   /// Returns a new parser for the given tokens.
-  pub fn new(tokens: Vec<Token<'input, K>>) -> Self {
+  pub fn new(tokens: &'input [Token<'input, K>]) -> Self {
     Self {
       tokens,
       idx: 0,
