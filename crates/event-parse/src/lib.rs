@@ -106,6 +106,51 @@ impl<'input, K> Parser<'input, K> {
     }
     ret
   }
+
+  /// Saves the state of the parser.
+  ///
+  /// This clears the set of expected tokens.
+  ///
+  /// Between when this `Save` is created and when it consumed (with either
+  /// [`Self::restore`] or just by dropping it), there should be no calls to
+  /// [`Self::exit`] or [`Self::precede`] with any [`Entered`] that were created
+  /// before this `Save`, nor should there be any calls to [`Self::restore`]
+  /// with any `Save` created before this `Save`.
+  ///
+  /// If there are, as in e.g.
+  ///
+  /// ```ignore
+  /// let ent = p.enter();
+  /// let s = p.save();
+  /// p.exit(k, ent);
+  /// p.restore(s);
+  /// ```
+  ///
+  /// then Weird Things will happen, and the call to `restore` may not actually
+  /// fully restore the state of the parser to whatever it was when saved.
+  pub fn save(&mut self) -> Save<K> {
+    Save {
+      idx: self.idx,
+      events_len: self.events.len(),
+      expected: std::mem::take(&mut self.expected),
+    }
+  }
+
+  /// Returns whether there has been an error since the save.
+  pub fn error_since(&self, save: &Save<K>) -> bool {
+    self
+      .events
+      .iter()
+      .skip(save.events_len)
+      .any(|ev| matches!(*ev, Some(Event::Error(_))))
+  }
+
+  /// Restores the saved state.
+  pub fn restore(&mut self, save: Save<K>) {
+    self.idx = save.idx;
+    self.events.truncate(save.events_len);
+    self.expected = save.expected;
+  }
 }
 
 impl<'input, K> Parser<'input, K>
@@ -273,6 +318,14 @@ pub struct Entered {
 #[derive(Debug)]
 pub struct Exited {
   idx: usize,
+}
+
+/// The saved state of the parser.
+#[derive(Debug)]
+pub struct Save<K> {
+  idx: usize,
+  events_len: usize,
+  expected: Vec<K>,
 }
 
 /// A token, a pair of kind and text.
