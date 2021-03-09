@@ -45,6 +45,21 @@ impl<'input, K> Parser<'input, K> {
   ///
   /// The returned [`Entered`] must eventually be passed to [`Self::exit`] or
   /// [`Self::abandon`]. If it is not, it will panic when dropped.
+  ///
+  /// `Entered`s returned from `enter` should be consumed with `exit` or
+  /// `abandon` in a FIFO manner. That is, the first most recently created
+  /// `Entered` should be the first one to be consumed. (Might be more like
+  /// first-out first-in in this case actually.)
+  ///
+  /// If this invariant isn't upheld, as in e.g.
+  ///
+  /// ```ignore
+  /// let e1 = p.enter();
+  /// let e2 = p.enter();
+  /// p.exit(k, e1);
+  /// ```
+  ///
+  /// then Weird Things might happen.
   pub fn enter(&mut self) -> Entered {
     let idx = self.events.len();
     self.events.push(None);
