@@ -142,7 +142,7 @@ impl<'input, K> Parser<'input, K> {
       .events
       .iter()
       .skip(save.events_len)
-      .any(|ev| matches!(*ev, Some(Event::Error(_))))
+      .any(|ev| matches!(*ev, Some(Event::Error(..))))
   }
 
   /// Restores the saved state.
@@ -212,11 +212,20 @@ where
 
   /// Records an error at the current token.
   pub fn error(&mut self) {
+    self._error(None)
+  }
+
+  /// Records an error with a custom message at the current token.
+  pub fn error_with(&mut self, message: String) {
+    self._error(Some(message))
+  }
+
+  fn _error(&mut self, message: Option<String>) {
     let expected = std::mem::take(&mut self.expected);
     if self.peek().is_some() {
       self.bump();
     }
-    self.events.push(Some(Event::Error(expected)));
+    self.events.push(Some(Event::Error(expected, message)));
   }
 
   fn eat_trivia(&mut self, sink: &mut dyn Sink<K>) {
@@ -274,7 +283,7 @@ where
           sink.token(self.tokens[self.idx]);
           self.idx += 1;
         }
-        Event::Error(expected) => sink.error(expected),
+        Event::Error(expected, message) => sink.error(expected, message),
       }
     }
     assert_eq!(levels, 0);
@@ -352,7 +361,7 @@ pub trait Sink<K> {
   /// Exits a syntax construct.
   fn exit(&mut self);
   /// Reports an error.
-  fn error(&mut self, expected: Vec<K>);
+  fn error(&mut self, expected: Vec<K>, message: Option<String>);
 }
 
 #[derive(Debug)]
@@ -360,7 +369,7 @@ enum Event<K> {
   Enter(K, Option<usize>),
   Token,
   Exit,
-  Error(Vec<K>),
+  Error(Vec<K>, Option<String>),
 }
 
 #[test]
