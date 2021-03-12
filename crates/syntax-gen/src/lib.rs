@@ -35,7 +35,7 @@ enum Kind {
 ///
 /// `trivia` is a list of all the `SyntaxKind`s which should be made as trivia.
 ///
-/// The generated Rust files will depend on `rowan` and `event-parse`. The files
+/// The generated Rust files will depend on `rowan` and `token`. The files
 /// will be formatted with rustfmt.
 ///
 /// `src/kind.rs` will contain definitions for the language's `SyntaxKind` and
@@ -167,7 +167,7 @@ where
       }
     }
 
-    impl event_parse::Triviable for SyntaxKind {
+    impl token::Triviable for SyntaxKind {
       fn is_trivia(&self) -> bool {
         matches!(*self, #(#self_trivia)|*)
       }

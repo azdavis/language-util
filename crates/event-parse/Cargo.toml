@@ -10,3 +10,4 @@ test = false
 
 [dependencies]
 drop_bomb = "0.1"
+token = { path = "../token" }
