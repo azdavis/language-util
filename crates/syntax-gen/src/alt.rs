@@ -80,7 +80,7 @@ fn get_tokens(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
           #(#casts ,)*
           _ => return None,
         };
-        Some(Self { kind, token })
+        Some(Self { token, kind })
       }
     }
   }
