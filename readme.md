@@ -38,6 +38,10 @@ Generates Rust code from an [ungrammar][].
 Allows translating between byte indices and line-and-character positions in a
 string.
 
+## `token`
+
+A simple token type (text + token kind) and a simple trait for trivia.
+
 ## `topo-sort`
 
 Generic topological sorting. Useful for when you have many interdependent things
