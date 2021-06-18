@@ -61,6 +61,9 @@ where
 {
   let lang = ident(lang);
   let tokens = token::TokenDb::new(&grammar, get_token);
+  let mut types = Vec::new();
+  let trivia: Vec<_> = trivia.iter().map(|&x| ident(x)).collect();
+  let mut syntax_kinds = trivia.clone();
   let mut cx = Cx {
     lang,
     grammar,
@@ -68,9 +71,6 @@ where
     token_alts: FxHashSet::default(),
   };
   let mut token_alts = FxHashSet::default();
-  let mut types = Vec::new();
-  let trivia: Vec<_> = trivia.iter().map(|&x| ident(x)).collect();
-  let mut syntax_kinds = trivia.clone();
   // first process all the alts
   for node in cx.grammar.iter() {
     let data = &cx.grammar[node];
@@ -81,7 +81,7 @@ where
     types.push(alt::get(&cx, &mut token_alts, ident(&data.name), rules));
   }
   // it would be nicer if we could just mutate token_alts on the cx but we have
-  // an active immutable borrow to iterate over the grammar. so we use a kludge
+  // an active shared borrow to iterate over the grammar. so we use a kludge.
   cx.token_alts = token_alts;
   // then everything else
   for node in cx.grammar.iter() {
