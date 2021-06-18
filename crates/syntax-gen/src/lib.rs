@@ -223,6 +223,7 @@ where
     use ast_ptr::HasLanguage;
     use std::convert::{TryFrom, TryInto};
 
+    #[allow(unused)]
     fn tokens<P>(parent: &P, kind: SK) -> impl Iterator<Item = SyntaxToken>
     where
       P: AsRef<SyntaxNode>,
@@ -234,6 +235,7 @@ where
         .filter(move |tok| tok.kind() == kind)
     }
 
+    #[allow(unused)]
     fn token_children<P, C>(parent: &P) -> impl Iterator<Item = C>
     where
       P: AsRef<SyntaxNode>,
@@ -246,6 +248,7 @@ where
         .filter_map(|x| x.try_into().ok())
     }
 
+    #[allow(unused)]
     fn node_children<P, C>(parent: &P) -> impl Iterator<Item = C>
     where
       P: AsRef<SyntaxNode>,
