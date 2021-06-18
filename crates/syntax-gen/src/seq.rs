@@ -84,7 +84,7 @@ fn field<'cx>(
         base_body = if cx.token_alts.contains(&base_ty) {
           quote! { token_children(self) }
         } else {
-          quote! { children(self) }
+          quote! { node_children(self) }
         };
         break;
       }

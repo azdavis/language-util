@@ -246,7 +246,7 @@ where
         .filter_map(|x| x.try_into().ok())
     }
 
-    fn children<P, C>(parent: &P) -> impl Iterator<Item = C>
+    fn node_children<P, C>(parent: &P) -> impl Iterator<Item = C>
     where
       P: AsRef<SyntaxNode>,
       SyntaxNode: TryInto<C>,
