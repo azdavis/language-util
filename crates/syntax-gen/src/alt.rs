@@ -1,17 +1,27 @@
 use crate::util::{ident, unwrap_node, unwrap_token, Cx};
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
+use rustc_hash::FxHashSet;
 use ungrammar::Rule;
 
-pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
+pub(crate) fn get(
+  cx: &Cx,
+  token_alts: &mut FxHashSet<Ident>,
+  name: Ident,
+  rules: &[Rule],
+) -> TokenStream {
   match rules.first().unwrap() {
     Rule::Node(_) => get_nodes(cx, name, rules),
-    Rule::Token(_) => get_tokens(cx, name, rules),
+    Rule::Token(_) => {
+      token_alts.insert(name.clone());
+      get_tokens(cx, name, rules)
+    }
     bad => panic!("bad alt rule {:?}", bad),
   }
 }
 
 fn get_nodes(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
+  let lang = &cx.lang;
   let mut defs = Vec::with_capacity(rules.len());
   let mut casts = Vec::with_capacity(rules.len());
   let mut syntaxes = Vec::with_capacity(rules.len());
@@ -19,24 +29,27 @@ fn get_nodes(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
     let name = ident(&cx.grammar[unwrap_node(rule)].name);
     defs.push(quote! { #name(#name) });
     casts.push(quote! { SK::#name => Self::#name(#name(node)) });
-    syntaxes.push(quote! { Self::#name(x) => x.syntax() });
+    syntaxes.push(quote! { Self::#name(x) => x.as_ref() });
   }
   quote! {
     pub enum #name {
       #(#defs ,)*
     }
-    impl Cast for #name {
-      fn cast(elem: SyntaxElement) -> Option<Self> {
-        let node = elem.into_node()?;
+    impl HasLanguage for #name {
+      type Language = #lang;
+    }
+    impl TryFrom<SyntaxNode> for #name {
+      type Error = ();
+      fn try_from(node: SyntaxNode) -> Result<Self, Self::Error> {
         let ret = match node.kind() {
           #(#casts ,)*
-          _ => return None,
+          _ => return Err(()),
         };
-        Some(ret)
+        Ok(ret)
       }
     }
-    impl Syntax for #name {
-      fn syntax(&self) -> &SyntaxNode {
+    impl AsRef<SyntaxNode> for #name {
+      fn as_ref(&self) -> &SyntaxNode {
         match self {
           #(#syntaxes ,)*
         }
@@ -46,6 +59,7 @@ fn get_nodes(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
 }
 
 fn get_tokens(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
+  let lang = &cx.lang;
   let name_kind = format_ident!("{}Kind", name);
   let mut defs = Vec::with_capacity(rules.len());
   let mut casts = Vec::with_capacity(rules.len());
@@ -73,14 +87,17 @@ fn get_tokens(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
       pub token: SyntaxToken,
       pub kind: #name_kind,
     }
-    impl Cast for #name {
-      fn cast(elem: SyntaxElement) -> Option<Self> {
-        let token = elem.into_token()?;
+    impl HasLanguage for #name {
+      type Language = #lang;
+    }
+    impl TryFrom<SyntaxToken> for #name {
+      type Error = ();
+      fn try_from(token: SyntaxToken) -> Result<Self, Self::Error> {
         let kind = match token.kind() {
           #(#casts ,)*
-          _ => return None,
+          _ => return Err(()),
         };
-        Some(Self { token, kind })
+        Ok(Self { token, kind })
       }
     }
   }

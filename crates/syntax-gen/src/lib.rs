@@ -7,7 +7,6 @@
 #![deny(rust_2018_idioms)]
 
 mod alt;
-mod ptr;
 mod seq;
 mod token;
 mod util;
@@ -17,26 +16,29 @@ pub use token::TokenKind;
 use crate::util::{ident, Cx};
 use proc_macro2::Literal;
 use quote::quote;
+use rustc_hash::FxHashSet;
 use std::cmp::Reverse;
 use ungrammar::{Grammar, Rule};
 
-enum Kind {
-  Seq,
-  Alt,
-}
-
 /// Generates Rust code from the `grammar` of the `lang` and writes it to
-/// `src/kind.rs`, `src/ast.rs`, and `src/ptr.rs`
+/// `src/kind.rs` and `src/ast.rs`.
 ///
-/// `get_token` will be called for each token in `grammar`, and should return
-/// `(kind, name`), where `kind` is what kind of token this is (a [`TokenKind`])
-/// and `name` is the name of the token, to be used as an enum variant in the
-/// generated `SyntaxKind`.
+/// `lang` is the name of the language, `trivia` is a list of all the
+/// `SyntaxKind`s which should be made as trivia, and `grammar` is the grammar
+/// for the language.
 ///
-/// `trivia` is a list of all the `SyntaxKind`s which should be made as trivia.
+/// `get_token` will be called once for each token in `grammar`, and should
+/// return a tuple `(kind, name)`, where `kind` is what kind of token this is (a
+/// [`TokenKind`]) and `name` is the name of the token, to be used as an enum
+/// variant in the generated `SyntaxKind`.
 ///
-/// The generated Rust files will depend on `rowan` and `token`. The files
-/// will be formatted with rustfmt.
+/// The generated Rust files will depend on:
+///
+/// - `rowan` from crates.io
+/// - `token` from language-server-util
+/// - `ast-ptr` from language-server-util
+///
+/// The files will be formatted with rustfmt.
 ///
 /// `src/kind.rs` will contain definitions for the language's `SyntaxKind` and
 /// associated types, using all the different tokens extracted from `grammar`
@@ -44,9 +46,6 @@ enum Kind {
 ///
 /// `src/ast.rs` will contain a strongly-typed API for traversing a syntax tree
 /// for `lang`, based on the `grammar`.
-///
-/// `src/ptr.rs` will contain `AstPtr`, a 'pointer' to some AST node that is
-/// stable between re-parses of the same file.
 ///
 /// Returns `Err` if the files could not be written. Panics if certain
 /// properties about `grammar` do not hold. (Read the source/panic messages to
@@ -62,28 +61,46 @@ where
 {
   let lang = ident(lang);
   let tokens = token::TokenDb::new(&grammar, get_token);
-  let cx = Cx { grammar, tokens };
+  let mut cx = Cx {
+    lang,
+    grammar,
+    tokens,
+    token_alts: FxHashSet::default(),
+  };
+  let mut token_alts = FxHashSet::default();
   let mut types = Vec::new();
   let trivia: Vec<_> = trivia.iter().map(|&x| ident(x)).collect();
   let mut syntax_kinds = trivia.clone();
+  // first process all the alts
   for node in cx.grammar.iter() {
     let data = &cx.grammar[node];
-    let name = ident(&data.name);
-    let (kind, rules) = match &data.rule {
-      Rule::Seq(rules) => (Kind::Seq, rules.as_slice()),
-      Rule::Alt(rules) => (Kind::Alt, rules.as_slice()),
-      rule => (Kind::Seq, std::slice::from_ref(rule)),
+    let rules = match &data.rule {
+      Rule::Alt(rules) => rules.as_slice(),
+      _ => continue,
     };
-    let ty = match kind {
-      Kind::Seq => {
-        syntax_kinds.push(name.clone());
-        seq::get(&cx, name, rules)
-      }
-      Kind::Alt => alt::get(&cx, name, rules),
-    };
-    types.push(ty);
+    types.push(alt::get(&cx, &mut token_alts, ident(&data.name), rules));
   }
-  let Cx { grammar, tokens } = cx;
+  // it would be nicer if we could just mutate token_alts on the cx but we have
+  // an active immutable borrow to iterate over the grammar. so we use a kludge
+  cx.token_alts = token_alts;
+  // then everything else
+  for node in cx.grammar.iter() {
+    let data = &cx.grammar[node];
+    let rules = match &data.rule {
+      Rule::Alt(_) => continue,
+      Rule::Seq(rules) => rules.as_slice(),
+      rule => std::slice::from_ref(rule),
+    };
+    let name = ident(&data.name);
+    syntax_kinds.push(name.clone());
+    types.push(seq::get(&cx, name, rules));
+  }
+  let Cx {
+    grammar,
+    tokens,
+    lang,
+    ..
+  } = cx;
   let keywords = {
     let mut xs: Vec<_> = tokens
       .keywords
@@ -202,39 +219,44 @@ where
   let ast = quote! {
     #![allow(clippy::iter_nth_zero)]
 
-    use crate::kind::{SyntaxElement, SyntaxKind as SK, SyntaxNode, SyntaxToken};
-
-    pub trait Cast: Sized {
-      fn cast(elem: SyntaxElement) -> Option<Self>;
-    }
-
-    pub trait Syntax {
-      fn syntax(&self) -> &SyntaxNode;
-    }
+    use crate::kind::{SyntaxKind as SK, SyntaxNode, SyntaxToken, #lang};
+    use ast_ptr::HasLanguage;
+    use std::convert::{TryFrom, TryInto};
 
     fn tokens<P>(parent: &P, kind: SK) -> impl Iterator<Item = SyntaxToken>
     where
-      P: Syntax,
+      P: AsRef<SyntaxNode>,
     {
       parent
-        .syntax()
+        .as_ref()
         .children_with_tokens()
         .filter_map(rowan::NodeOrToken::into_token)
         .filter(move |tok| tok.kind() == kind)
     }
 
+    fn token_children<P, C>(parent: &P) -> impl Iterator<Item = C>
+    where
+      P: AsRef<SyntaxNode>,
+      SyntaxToken: TryInto<C>,
+    {
+      parent
+        .as_ref()
+        .children_with_tokens()
+        .filter_map(rowan::NodeOrToken::into_token)
+        .filter_map(|x| x.try_into().ok())
+    }
+
     fn children<P, C>(parent: &P) -> impl Iterator<Item = C>
     where
-      P: Syntax,
-      C: Cast,
+      P: AsRef<SyntaxNode>,
+      SyntaxNode: TryInto<C>,
     {
-      parent.syntax().children_with_tokens().filter_map(C::cast)
+      parent.as_ref().children().filter_map(|x| x.try_into().ok())
     }
 
     #(#types)*
   };
   util::write_rust_file("src/kind.rs", kind.to_string().as_ref())?;
   util::write_rust_file("src/ast.rs", ast.to_string().as_ref())?;
-  util::write_rust_file("src/ptr.rs", ptr::get().to_string().as_ref())?;
   Ok(())
 }

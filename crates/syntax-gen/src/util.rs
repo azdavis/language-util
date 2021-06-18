@@ -1,6 +1,7 @@
 use crate::token::TokenDb;
 use proc_macro2::Ident;
 use quote::format_ident;
+use rustc_hash::FxHashSet;
 use std::fs::OpenOptions;
 use std::io::{Result, Write as _};
 use std::process::{Command, Stdio};
@@ -8,8 +9,10 @@ use ungrammar::{Grammar, Node, Rule, Token};
 
 #[derive(Debug)]
 pub(crate) struct Cx {
+  pub(crate) lang: Ident,
   pub(crate) grammar: Grammar,
   pub(crate) tokens: TokenDb,
+  pub(crate) token_alts: FxHashSet<Ident>,
 }
 
 pub(crate) fn ident(s: &str) -> Ident {

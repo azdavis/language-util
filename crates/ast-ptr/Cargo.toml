@@ -1,0 +1,11 @@
+[package]
+name = "ast-ptr"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+doctest = false
+test = false
+
+[dependencies]
+rowan = "0.12"

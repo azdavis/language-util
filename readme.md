@@ -6,6 +6,10 @@ Most (all?) of these crates used to be from [c0ls][], but they are generic
 enough that they were moved out of it so that they may be re-used in other
 language servers.
 
+## `ast-ptr`
+
+'Pointers' to AST nodes in a rowan `SyntaxNode`.
+
 ## `char-name`
 
 A helper function that gives an English name to some characters.

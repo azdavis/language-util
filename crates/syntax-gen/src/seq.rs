@@ -6,6 +6,7 @@ use std::hash::Hash;
 use ungrammar::Rule;
 
 pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
+  let lang = &cx.lang;
   let mut counts = Counts::default();
   let fields = rules.iter().map(|rule| field(cx, &mut counts, rule));
   let derives = if name == "Root" {
@@ -19,14 +20,21 @@ pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
     impl #name {
       #(#fields)*
     }
-    impl Cast for #name {
-      fn cast(elem: SyntaxElement) -> Option<Self> {
-        let node = elem.into_node()?;
-        (node.kind() == SK::#name).then(|| Self(node))
+    impl HasLanguage for #name {
+      type Language = #lang;
+    }
+    impl TryFrom<SyntaxNode> for #name {
+      type Error = ();
+      fn try_from(node: SyntaxNode) -> Result<Self, Self::Error> {
+        if node.kind() == SK::#name {
+          Ok(Self(node))
+        } else {
+          Err(())
+        }
       }
     }
-    impl Syntax for #name {
-      fn syntax(&self) -> &SyntaxNode {
+    impl AsRef<SyntaxNode> for #name {
+      fn as_ref(&self) -> &SyntaxNode {
         &self.0
       }
     }
@@ -73,7 +81,11 @@ fn field<'cx>(
       Rule::Node(node) => {
         name = cx.grammar[*node].name.as_str();
         base_ty = ident(name);
-        base_body = quote! { children(self) };
+        base_body = if cx.token_alts.contains(&base_ty) {
+          quote! { token_children(self) }
+        } else {
+          quote! { children(self) }
+        };
         break;
       }
       Rule::Token(tok) => {
