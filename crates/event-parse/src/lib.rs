@@ -210,7 +210,7 @@ where
                 parent = new_parent;
               }
               // abandoned precede
-              None => {}
+              None => break,
               ev => unreachable!("{:?} was {:?}, not Enter", parent, ev),
             }
           }
