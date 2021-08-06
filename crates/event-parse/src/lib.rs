@@ -23,6 +23,7 @@
 pub mod rowan_sink;
 
 use drop_bomb::DropBomb;
+use std::fmt;
 use token::{Token, Triviable};
 
 /// A event-based parser.
@@ -106,7 +107,7 @@ impl<'input, K> Parser<'input, K> {
         assert!(parent.is_none());
         *parent = Some(ret.idx);
       }
-      _ => unreachable!("{:?} did not precede an Enter", exited),
+      ref ev => unreachable!("{:?} preceded {:?}, not Enter", exited, ev),
     }
     ret
   }
@@ -208,7 +209,7 @@ where
                 kinds.push(kind);
                 parent = new_parent;
               }
-              _ => unreachable!("{:?} was not an Enter", parent),
+              ev => unreachable!("{:?} was {:?}, not Enter", parent, ev),
             }
           }
           for kind in kinds.drain(..).rev() {
@@ -299,12 +300,22 @@ pub trait Sink<K> {
   fn error(&mut self, expected: Vec<K>);
 }
 
-#[derive(Debug)]
 enum Event<K> {
   Enter(K, Option<usize>),
   Token,
   Exit,
   Error(Vec<K>),
+}
+
+impl<K> fmt::Debug for Event<K> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Event::Enter(_, n) => f.debug_tuple("Enter").field(n).finish(),
+      Event::Token => f.debug_tuple("Token").finish(),
+      Event::Exit => f.debug_tuple("Exit").finish(),
+      Event::Error(_) => f.debug_tuple("Error").finish(),
+    }
+  }
 }
 
 #[test]
