@@ -4,7 +4,7 @@ use rowan::{GreenNode, GreenNodeBuilder, SyntaxKind, TextRange, TextSize};
 use token::Token;
 
 /// The sink, which wraps a Rowan `GreenNodeBuilder`.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct RowanSink<T> {
   builder: GreenNodeBuilder<'static>,
   range: Option<TextRange>,
@@ -15,6 +15,16 @@ impl<T> RowanSink<T> {
   /// Finish the builder.
   pub fn finish(self) -> (GreenNode, Vec<Error<T>>) {
     (self.builder.finish(), self.errors)
+  }
+}
+
+impl<T> Default for RowanSink<T> {
+  fn default() -> Self {
+    Self {
+      builder: GreenNodeBuilder::default(),
+      range: None,
+      errors: Vec::new(),
+    }
   }
 }
 
