@@ -66,7 +66,7 @@ fn get_tokens(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
   let mut to_strs = Vec::with_capacity(rules.len());
   for rule in rules {
     let tok = unwrap_token(rule);
-    let name = ident(&cx.tokens.name(tok));
+    let name = ident(cx.tokens.name(tok));
     let text = cx.grammar[tok].name.as_str();
     defs.push(quote! { #name });
     casts.push(quote! { SK::#name => #name_kind::#name });
