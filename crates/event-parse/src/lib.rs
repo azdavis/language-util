@@ -280,14 +280,6 @@ pub struct Exited {
   idx: usize,
 }
 
-/// The saved state of the parser.
-#[derive(Debug)]
-pub struct Save<K> {
-  idx: usize,
-  events_len: usize,
-  expected: Vec<K>,
-}
-
 /// Types which can construct a syntax tree.
 pub trait Sink<K> {
   /// Enters a syntax construct with the given kind.
