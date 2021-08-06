@@ -209,6 +209,8 @@ where
                 kinds.push(kind);
                 parent = new_parent;
               }
+              // abandoned precede
+              None => {}
               ev => unreachable!("{:?} was {:?}, not Enter", parent, ev),
             }
           }
