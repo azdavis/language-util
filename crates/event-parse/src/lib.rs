@@ -19,6 +19,9 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
+#[cfg(feature = "rowan")]
+pub mod rowan_sink;
+
 use drop_bomb::DropBomb;
 use token::{Token, Triviable};
 
