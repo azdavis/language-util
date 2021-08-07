@@ -1,5 +1,6 @@
-//! A `Sink` for Rowan trees.
+//! A [`Sink`] for Rowan trees.
 
+use crate::Sink;
 use rowan::{GreenNode, GreenNodeBuilder, SyntaxKind, TextRange, TextSize};
 use token::Token;
 
@@ -28,7 +29,7 @@ impl<T> Default for RowanSink<T> {
   }
 }
 
-impl<T> crate::Sink<T> for RowanSink<T>
+impl<T> Sink<T> for RowanSink<T>
 where
   T: Into<SyntaxKind>,
 {
