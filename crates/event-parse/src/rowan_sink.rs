@@ -1,7 +1,9 @@
 //! A [`Sink`] for Rowan trees.
 
 use crate::Sink;
-use rowan::{GreenNode, GreenNodeBuilder, SyntaxKind, TextRange, TextSize};
+use rowan::{
+  GreenNodeBuilder, Language, SyntaxKind, SyntaxNode, TextRange, TextSize,
+};
 use token::Token;
 
 /// The sink, which wraps a Rowan `GreenNodeBuilder`.
@@ -14,8 +16,11 @@ pub struct RowanSink<T> {
 
 impl<T> RowanSink<T> {
   /// Finish the builder.
-  pub fn finish(self) -> (GreenNode, Vec<Error<T>>) {
-    (self.builder.finish(), self.errors)
+  pub fn finish<L>(self) -> (SyntaxNode<L>, Vec<Error<T>>)
+  where
+    L: Language,
+  {
+    (SyntaxNode::new_root(self.builder.finish()), self.errors)
   }
 }
 
