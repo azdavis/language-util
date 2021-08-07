@@ -217,8 +217,6 @@ where
     pub type SyntaxElement = rowan::SyntaxElement<#lang>;
   };
   let ast = quote! {
-    #![allow(clippy::iter_nth_zero)]
-
     use crate::kind::{SyntaxKind as SK, SyntaxNode, SyntaxToken, #lang};
     use ast_ptr::HasLanguage;
     use std::convert::{TryFrom, TryInto};

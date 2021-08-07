@@ -135,7 +135,11 @@ fn field<'cx>(
     }
     Modifier::Optional | Modifier::Regular => {
       ret_ty = quote! { Option<#base_ty> };
-      body = quote! { #base_body.nth(#idx) };
+      body = if idx == 0 {
+        quote! { #base_body.next() }
+      } else {
+        quote! { #base_body.nth(#idx) }
+      };
     }
   };
   quote! {
