@@ -157,6 +157,8 @@ where
     .collect();
   let last_syntax_kind = syntax_kinds.last().unwrap();
   let kind = quote! {
+    use std::fmt;
+
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[repr(u16)]
     pub enum SyntaxKind {
@@ -188,6 +190,15 @@ where
     impl token::Triviable for SyntaxKind {
       fn is_trivia(&self) -> bool {
         matches!(*self, #(#self_trivia)|*)
+      }
+    }
+
+    impl fmt::Display for SyntaxKind {
+      fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.token_desc() {
+          None => write!(f, "{:?}", self),
+          Some(s) => f.write_str(s),
+        }
       }
     }
 
