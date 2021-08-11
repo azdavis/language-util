@@ -1,6 +1,7 @@
-# language-server-util
+# language-util
 
-Various utility crates that might be useful when implementing a language server.
+Various utility crates that might be useful when implementing a programming
+language in Rust.
 
 Most (all?) of these crates used to be from [c0ls][], but they are generic
 enough that they were moved out of it so that they may be re-used in other

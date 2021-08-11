@@ -35,8 +35,8 @@ use ungrammar::{Grammar, Rule};
 /// The generated Rust files will depend on:
 ///
 /// - `rowan` from crates.io
-/// - `token` from language-server-util
-/// - `ast-ptr` from language-server-util
+/// - `token` from language-util
+/// - `ast-ptr` from language-util
 ///
 /// The files will be formatted with rustfmt.
 ///
