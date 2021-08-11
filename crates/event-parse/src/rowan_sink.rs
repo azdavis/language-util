@@ -8,15 +8,15 @@ use token::Token;
 
 /// The sink, which wraps a Rowan `GreenNodeBuilder`.
 #[derive(Debug)]
-pub struct RowanSink<T> {
+pub struct RowanSink {
   builder: GreenNodeBuilder<'static>,
   range: Option<TextRange>,
-  errors: Vec<Error<T>>,
+  errors: Vec<Error>,
 }
 
-impl<T> RowanSink<T> {
+impl RowanSink {
   /// Finish the builder.
-  pub fn finish<L>(self) -> (SyntaxNode<L>, Vec<Error<T>>)
+  pub fn finish<L>(self) -> (SyntaxNode<L>, Vec<Error>)
   where
     L: Language,
   {
@@ -24,7 +24,7 @@ impl<T> RowanSink<T> {
   }
 }
 
-impl<T> Default for RowanSink<T> {
+impl Default for RowanSink {
   fn default() -> Self {
     Self {
       builder: GreenNodeBuilder::default(),
@@ -34,15 +34,15 @@ impl<T> Default for RowanSink<T> {
   }
 }
 
-impl<T> Sink<T> for RowanSink<T>
+impl<K> Sink<K> for RowanSink
 where
-  T: Into<SyntaxKind>,
+  K: Into<SyntaxKind>,
 {
-  fn enter(&mut self, kind: T) {
+  fn enter(&mut self, kind: K) {
     self.builder.start_node(kind.into());
   }
 
-  fn token(&mut self, token: Token<'_, T>) {
+  fn token(&mut self, token: Token<'_, K>) {
     self.builder.token(token.kind.into(), token.text);
     let start = self.range.as_ref().map_or(0.into(), |range| range.end());
     let end = start + TextSize::of(token.text);
@@ -53,19 +53,19 @@ where
     self.builder.finish_node();
   }
 
-  fn error(&mut self, expected: Vec<T>) {
+  fn error(&mut self, message: String) {
     self.errors.push(Error {
       range: self.range.expect("error with no tokens"),
-      expected,
+      message,
     });
   }
 }
 
 /// A parse error.
 #[derive(Debug)]
-pub struct Error<T> {
-  /// The range of the unexpected token.
+pub struct Error {
+  /// The range of the error.
   pub range: TextRange,
-  /// The tokens that would have been allowed.
-  pub expected: Vec<T>,
+  /// The message.
+  pub message: String,
 }

@@ -4,7 +4,11 @@
 //! 1. Define your own enum, perhaps called `SyntaxKind`, which includes all of
 //!    the kinds of tokens and syntactic constructs found in your language,
 //!    including 'trivia' like comments and whitespace.
-//! 2. Implement [`Eq`], [`Copy`], and [`Triviable`] for this enum.
+//! 2. Implement the following traits for the enum:
+//!    - [`Copy`]
+//!    - [`Eq`]
+//!    - [`Triviable`]
+//!    - [`fmt::Display`]
 //! 3. Define a lexer which transforms an input string into a vector of
 //!    contiguous [`Token`]s using this `SyntaxKind`.
 //! 4. Define your language's grammar with functions operating on a [`Parser`].
@@ -31,7 +35,6 @@ use token::{Token, Triviable};
 pub struct Parser<'input, K> {
   tokens: &'input [Token<'input, K>],
   idx: usize,
-  expected: Vec<K>,
   events: Vec<Option<Event<K>>>,
 }
 
@@ -41,7 +44,6 @@ impl<'input, K> Parser<'input, K> {
     Self {
       tokens,
       idx: 0,
-      expected: Vec::new(),
       events: Vec::new(),
     }
   }
@@ -154,8 +156,7 @@ where
     ret
   }
 
-  /// Consumes and returns the current token, and clears the set of expected
-  /// tokens.
+  /// Consumes and returns the current token.
   ///
   /// Panics if there are no more tokens, i.e. if [`Self::peek`] would return
   /// `None` just prior to calling this.
@@ -166,17 +167,18 @@ where
     let ret = self.peek().expect("bump with no tokens");
     self.events.push(Some(Event::Token));
     self.idx += 1;
-    self.expected.clear();
     ret
   }
 
   /// Records an error at the current token.
-  pub fn error(&mut self) {
-    let expected = std::mem::take(&mut self.expected);
+  pub fn error<S>(&mut self, message: S)
+  where
+    S: Into<String>,
+  {
     if self.peek().is_some() {
       self.bump();
     }
-    self.events.push(Some(Event::Error(expected)));
+    self.events.push(Some(Event::Error(message.into())));
   }
 
   fn eat_trivia(&mut self, sink: &mut dyn Sink<K>) {
@@ -236,7 +238,7 @@ where
           sink.token(self.tokens[self.idx]);
           self.idx += 1;
         }
-        Event::Error(expected) => sink.error(expected),
+        Event::Error(message) => sink.error(message),
       }
     }
     assert_eq!(levels, 0);
@@ -248,21 +250,22 @@ where
   K: Copy + Triviable + Eq,
 {
   /// Returns whether the current token has the given `kind`.
-  ///
-  /// Also records that `kind` was one of the expected kinds, to be used if
-  /// [`Self::error`] is called later.
   pub fn at(&mut self, kind: K) -> bool {
-    self.expected.push(kind);
     self.peek().map_or(false, |tok| tok.kind == kind)
   }
+}
 
+impl<'input, K> Parser<'input, K>
+where
+  K: Copy + Triviable + Eq + fmt::Display,
+{
   /// If the current token's kind is `kind`, then this consumes it, else this
   /// errors. Returns the token if it was eaten.
   pub fn eat(&mut self, kind: K) -> Option<Token<'input, K>> {
     if self.at(kind) {
       Some(self.bump())
     } else {
-      self.error();
+      self.error(format!("expected {}", kind));
       None
     }
   }
@@ -291,14 +294,14 @@ pub trait Sink<K> {
   /// Exits a syntax construct.
   fn exit(&mut self);
   /// Reports an error.
-  fn error(&mut self, expected: Vec<K>);
+  fn error(&mut self, message: String);
 }
 
 enum Event<K> {
   Enter(K, Option<usize>),
   Token,
   Exit,
-  Error(Vec<K>),
+  Error(String),
 }
 
 impl<K> fmt::Debug for Event<K> {
@@ -307,7 +310,7 @@ impl<K> fmt::Debug for Event<K> {
       Event::Enter(_, n) => f.debug_tuple("Enter").field(n).finish(),
       Event::Token => f.debug_tuple("Token").finish(),
       Event::Exit => f.debug_tuple("Exit").finish(),
-      Event::Error(_) => f.debug_tuple("Error").finish(),
+      Event::Error(m) => f.debug_tuple("Error").field(m).finish(),
     }
   }
 }
