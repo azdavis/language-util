@@ -43,6 +43,10 @@ A simple token type (text + token kind) and a simple trait for trivia.
 Generic topological sorting. Useful for when you have many interdependent things
 and would like to know what order to process them in.
 
+## `uniq`
+
+Unique identifiers, and their generation.
+
 ## `unwrap-or`
 
 The macro form of `Option::unwrap_or`.
