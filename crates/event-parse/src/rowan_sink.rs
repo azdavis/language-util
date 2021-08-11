@@ -1,6 +1,6 @@
 //! A [`Sink`] for Rowan trees.
 
-use crate::Sink;
+use crate::{Expected, Sink};
 use rowan::{
   GreenNodeBuilder, Language, SyntaxKind, SyntaxNode, TextRange, TextSize,
 };
@@ -8,15 +8,15 @@ use token::Token;
 
 /// The sink, which wraps a Rowan `GreenNodeBuilder`.
 #[derive(Debug)]
-pub struct RowanSink {
+pub struct RowanSink<K> {
   builder: GreenNodeBuilder<'static>,
   range: Option<TextRange>,
-  errors: Vec<Error>,
+  errors: Vec<Error<K>>,
 }
 
-impl RowanSink {
+impl<K> RowanSink<K> {
   /// Finish the builder.
-  pub fn finish<L>(self) -> (SyntaxNode<L>, Vec<Error>)
+  pub fn finish<L>(self) -> (SyntaxNode<L>, Vec<Error<K>>)
   where
     L: Language,
   {
@@ -24,7 +24,7 @@ impl RowanSink {
   }
 }
 
-impl Default for RowanSink {
+impl<K> Default for RowanSink<K> {
   fn default() -> Self {
     Self {
       builder: GreenNodeBuilder::default(),
@@ -34,7 +34,7 @@ impl Default for RowanSink {
   }
 }
 
-impl<K> Sink<K> for RowanSink
+impl<K> Sink<K> for RowanSink<K>
 where
   K: Into<SyntaxKind>,
 {
@@ -53,19 +53,19 @@ where
     self.builder.finish_node();
   }
 
-  fn error(&mut self, message: String) {
+  fn error(&mut self, expected: Expected<K>) {
     self.errors.push(Error {
       range: self.range.expect("error with no tokens"),
-      message,
+      expected,
     });
   }
 }
 
 /// A parse error.
 #[derive(Debug)]
-pub struct Error {
+pub struct Error<K> {
   /// The range of the error.
   pub range: TextRange,
-  /// The message.
-  pub message: String,
+  /// The thing that was expected.
+  pub expected: Expected<K>,
 }

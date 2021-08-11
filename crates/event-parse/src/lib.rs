@@ -171,14 +171,15 @@ where
   }
 
   /// Records an error at the current token.
-  pub fn error<S>(&mut self, message: S)
-  where
-    S: Into<String>,
-  {
+  pub fn error(&mut self, message: &'static str) {
+    self.error_(Expected::Custom(message))
+  }
+
+  fn error_(&mut self, expected: Expected<K>) {
     if self.peek().is_some() {
       self.bump();
     }
-    self.events.push(Some(Event::Error(message.into())));
+    self.events.push(Some(Event::Error(expected)));
   }
 
   fn eat_trivia(&mut self, sink: &mut dyn Sink<K>) {
@@ -238,7 +239,7 @@ where
           sink.token(self.tokens[self.idx]);
           self.idx += 1;
         }
-        Event::Error(message) => sink.error(message),
+        Event::Error(expected) => sink.error(expected),
       }
     }
     assert_eq!(levels, 0);
@@ -253,19 +254,14 @@ where
   pub fn at(&mut self, kind: K) -> bool {
     self.peek().map_or(false, |tok| tok.kind == kind)
   }
-}
 
-impl<'input, K> Parser<'input, K>
-where
-  K: Copy + Triviable + Eq + fmt::Display,
-{
   /// If the current token's kind is `kind`, then this consumes it, else this
   /// errors. Returns the token if it was eaten.
   pub fn eat(&mut self, kind: K) -> Option<Token<'input, K>> {
     if self.at(kind) {
       Some(self.bump())
     } else {
-      self.error(format!("expected {}", kind));
+      self.error_(Expected::Kind(kind));
       None
     }
   }
@@ -294,14 +290,36 @@ pub trait Sink<K> {
   /// Exits a syntax construct.
   fn exit(&mut self);
   /// Reports an error.
-  fn error(&mut self, message: String);
+  fn error(&mut self, expected: Expected<K>);
+}
+
+/// Something expected.
+#[derive(Debug)]
+pub enum Expected<K> {
+  /// A kind.
+  Kind(K),
+  /// A custom message.
+  Custom(&'static str),
+}
+
+impl<K> fmt::Display for Expected<K>
+where
+  K: fmt::Display,
+{
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    f.write_str("expected ")?;
+    match self {
+      Expected::Kind(k) => k.fmt(f),
+      Expected::Custom(m) => f.write_str(m),
+    }
+  }
 }
 
 enum Event<K> {
   Enter(K, Option<usize>),
   Token,
   Exit,
-  Error(String),
+  Error(Expected<K>),
 }
 
 impl<K> fmt::Debug for Event<K> {
@@ -310,7 +328,7 @@ impl<K> fmt::Debug for Event<K> {
       Event::Enter(_, n) => f.debug_tuple("Enter").field(n).finish(),
       Event::Token => f.debug_tuple("Token").finish(),
       Event::Exit => f.debug_tuple("Exit").finish(),
-      Event::Error(m) => f.debug_tuple("Error").field(m).finish(),
+      Event::Error(_) => f.debug_tuple("Error").finish(),
     }
   }
 }
