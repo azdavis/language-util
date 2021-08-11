@@ -11,10 +11,6 @@ language servers.
 
 'Pointers' to AST nodes in a rowan `SyntaxNode`.
 
-## `char-name`
-
-A helper function that gives an English name to some characters.
-
 ## `event-parse`
 
 A generic framework for writing event-based parsers. Such parsers are ones that
@@ -28,11 +24,6 @@ of tokens:
 
 This also lets us handle trivia (whitespace, comments) in one place rather than
 all over the parser.
-
-## `identifier-case`
-
-Conversions between various identifier cases, like `snake_case` and
-`PascalCase`.
 
 ## `syntax-gen`
 

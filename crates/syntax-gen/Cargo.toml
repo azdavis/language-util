@@ -4,11 +4,9 @@ version = "0.1.0"
 edition = "2018"
 
 [lib]
-doctest = false
 test = false
 
 [dependencies]
-identifier-case = { path = "../identifier-case" }
 proc-macro2 = "1"
 quote = "1"
 rustc-hash = "1"

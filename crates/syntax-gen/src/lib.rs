@@ -7,6 +7,8 @@
 #![deny(rust_2018_idioms)]
 
 mod alt;
+pub mod char_name;
+pub mod identifier_case;
 mod seq;
 mod token;
 mod util;
