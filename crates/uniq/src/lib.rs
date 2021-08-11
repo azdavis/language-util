@@ -6,9 +6,17 @@
 #![deny(unsafe_code)]
 #![no_std]
 
+use core::fmt;
+
 /// A unique identifier.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Uniq(u32);
+
+impl fmt::Display for Uniq {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}", self.0)
+  }
+}
 
 /// A generator for [`Uniq`]s.
 #[derive(Debug, Default)]
