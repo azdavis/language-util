@@ -63,7 +63,7 @@ where
   let tokens = token::TokenDb::new(&grammar, get_token);
   let mut types = Vec::new();
   let trivia: Vec<_> = trivia.iter().map(|&x| ident(x)).collect();
-  let mut syntax_kinds = trivia.clone();
+  let mut node_syntax_kinds = Vec::new();
   let mut cx = Cx {
     lang,
     grammar,
@@ -92,7 +92,7 @@ where
       rule => std::slice::from_ref(rule),
     };
     let name = ident(&data.name);
-    syntax_kinds.push(name.clone());
+    node_syntax_kinds.push(name.clone());
     types.push(seq::get(&cx, name, rules));
   }
   let Cx {
@@ -147,13 +147,14 @@ where
   let self_trivia = trivia.iter().map(|id| {
     quote! { Self::#id }
   });
-  let new_syntax_kinds = keywords
+  // the order is intentional
+  let syntax_kinds: Vec<_> = trivia
     .iter()
+    .chain(keywords.iter().chain(punctuation.iter()).map(|(_, id)| id))
     .cloned()
-    .chain(punctuation.iter().cloned())
-    .map(|x| x.1)
-    .chain(special.iter().map(|&(ref name, _)| util::ident(name)));
-  syntax_kinds.extend(new_syntax_kinds);
+    .chain(special.iter().map(|(name, _)| util::ident(name)))
+    .chain(node_syntax_kinds)
+    .collect();
   let last_syntax_kind = syntax_kinds.last().unwrap();
   let kind = quote! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
