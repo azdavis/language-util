@@ -217,6 +217,8 @@ where
     pub type SyntaxElement = rowan::SyntaxElement<#lang>;
   };
   let ast = quote! {
+    #![doc = "Abstract syntax trees."]
+
     use crate::kind::{SyntaxKind as SK, SyntaxNode, SyntaxToken, #lang};
     use ast_ptr::HasLanguage;
     use std::convert::{TryFrom, TryInto};
