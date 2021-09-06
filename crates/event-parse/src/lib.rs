@@ -276,7 +276,22 @@ pub struct Entered {
 }
 
 /// A marker for a syntax construct that has been fully parsed.
-#[derive(Debug)]
+///
+/// We let this be `Copy` so we can do things like this:
+/// ```ignore
+/// let mut ex: Exited = ...;
+/// loop {
+///   let en = p.precede(ex);
+///   if ... {
+///     ...;
+///     ex = p.exit(en, ...);
+///   } else {
+///     p.abandon(ex);
+///     return Some(ex);
+///   }
+/// }
+/// ```
+#[derive(Debug, Clone, Copy)]
 pub struct Exited {
   idx: usize,
 }
