@@ -170,9 +170,10 @@ where
     ret
   }
 
-  /// Records an error at the current token.
-  pub fn error(&mut self, message: &'static str) {
-    self.error_(Expected::Custom(message))
+  /// Records an error at the current token, with an "expected `desc`" error
+  /// message.
+  pub fn error(&mut self, desc: &'static str) {
+    self.error_(Expected::Custom(desc))
   }
 
   fn error_(&mut self, expected: Expected<K>) {
@@ -286,7 +287,7 @@ pub struct Entered {
 ///     ...;
 ///     ex = p.exit(en, ...);
 ///   } else {
-///     p.abandon(ex);
+///     p.abandon(en);
 ///     return Some(ex);
 ///   }
 /// }
@@ -313,7 +314,7 @@ pub trait Sink<K> {
 pub enum Expected<K> {
   /// A kind.
   Kind(K),
-  /// A custom message.
+  /// A custom description.
   Custom(&'static str),
 }
 
@@ -325,7 +326,7 @@ where
     f.write_str("expected ")?;
     match self {
       Expected::Kind(k) => k.fmt(f),
-      Expected::Custom(m) => f.write_str(m),
+      Expected::Custom(d) => f.write_str(d),
     }
   }
 }
