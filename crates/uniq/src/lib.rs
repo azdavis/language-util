@@ -9,7 +9,7 @@
 use core::fmt;
 
 /// A unique identifier.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Uniq(u32);
 
 impl fmt::Display for Uniq {
