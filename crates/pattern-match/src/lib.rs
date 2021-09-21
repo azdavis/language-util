@@ -196,7 +196,7 @@ fn fail<C: Con>(
 ) -> bool {
   match pats.next() {
     None => false,
-    Some((idx, pat)) => do_match(r, idx, pat.clone(), desc, vec![], pats),
+    Some((idx, pat)) => do_match(r, idx, pat.clone(), desc, Vec::new(), pats),
   }
 }
 
@@ -244,7 +244,7 @@ fn succeed_with<C: Con>(
   assert_eq!(arg_pats.len(), arg_descs.len());
   work.push(WorkItem {
     con,
-    descs: vec![],
+    descs: Vec::new(),
     args: arg_pats
       .into_iter()
       .zip(arg_descs)
