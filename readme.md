@@ -25,6 +25,11 @@ of tokens:
 This also lets us handle trivia (whitespace, comments) in one place rather than
 all over the parser.
 
+## `pattern-match`
+
+Determine whether a sequence of patterns is exhaustive or if any of the patterns
+are unreachable.
+
 ## `syntax-gen`
 
 Generates Rust code from an [ungrammar][].
