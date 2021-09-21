@@ -213,7 +213,7 @@ fn succeed<C: Con>(
   }
 }
 
-/// Updates the work list with new work for the pattern at the `usize`, then
+/// Updates the work list with new work for the pattern at the index, then
 /// continues on to `succeed`. Returns whether the match was exhaustive.
 fn succeed_with<C: Con>(
   r: &mut Reachable,
