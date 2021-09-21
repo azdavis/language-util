@@ -65,7 +65,7 @@ enum StaticMatch<C> {
   /// The Con is not consistent with the Desc.
   No,
   /// The Con might be consistent with the Desc. If this is returned, then the
-  /// Desc was Neg, and the Vec<Con> was the innards of the Neg.
+  /// Desc was Neg, and the Vec was the innards of the Neg.
   Maybe(Vec<C>),
 }
 
