@@ -29,9 +29,15 @@ use std::hash::Hash;
 #[derive(Debug, Clone)]
 pub enum Pat<C> {
   /// Matches anything.
-  Anything,
+  Any,
   /// Matches a constructor with the given arguments.
   Con(C, Vec<Pat<C>>),
+}
+
+impl<C> From<C> for Pat<C> {
+  fn from(c: C) -> Self {
+    Self::Con(c, Vec::new())
+  }
 }
 
 /// A constructor.
@@ -266,7 +272,7 @@ fn do_match<C: Con>(
   pats: Pats<'_, C>,
 ) -> bool {
   match pat {
-    Pat::Anything => succeed(r, idx, augment(work, desc), pats),
+    Pat::Any => succeed(r, idx, augment(work, desc), pats),
     Pat::Con(con, args) => match static_match(con.clone(), &desc) {
       StaticMatch::Yes => succeed_with(r, idx, work, con, args, desc, pats),
       StaticMatch::No => fail(r, build_desc(desc, work), pats),
