@@ -103,7 +103,7 @@ type Work<C> = Vec<WorkItem<C>>;
 type Reachable = Vec<bool>;
 
 /// The patterns being processed.
-type Pats<C> = std::iter::Enumerate<std::vec::IntoIter<Pat<C>>>;
+type Pats<'a, C> = std::iter::Enumerate<std::slice::Iter<'a, Pat<C>>>;
 
 /// A determination of what the patterns were.
 #[derive(Debug)]
@@ -119,9 +119,9 @@ pub enum Res {
 /// Does the check.
 ///
 /// Patterns are matched in order from first to last.
-pub fn check<C: Con>(pats: Vec<Pat<C>>) -> Res {
+pub fn check<C: Con>(pats: &[Pat<C>]) -> Res {
   let mut r = vec![false; pats.len()];
-  if fail(&mut r, Desc::Neg(vec![]), pats.into_iter().enumerate()) {
+  if fail(&mut r, Desc::Neg(vec![]), pats.iter().enumerate()) {
     match r.iter().position(|&x| !x) {
       None => Res::Exhaustive,
       Some(idx) => Res::Unreachable(idx),
@@ -180,10 +180,14 @@ fn static_match<C: Con>(con: C, desc: &Desc<C>) -> StaticMatch<C> {
 
 /// Tries to pass the next pattern in `pats` to a fresh call to `do_match`.
 /// Returns whether the match was exhaustive.
-fn fail<C: Con>(r: &mut Reachable, desc: Desc<C>, mut pats: Pats<C>) -> bool {
+fn fail<C: Con>(
+  r: &mut Reachable,
+  desc: Desc<C>,
+  mut pats: Pats<'_, C>,
+) -> bool {
   match pats.next() {
     None => false,
-    Some((idx, pat)) => do_match(r, idx, pat, desc, vec![], pats),
+    Some((idx, pat)) => do_match(r, idx, pat.clone(), desc, vec![], pats),
   }
 }
 
@@ -193,7 +197,7 @@ fn succeed<C: Con>(
   r: &mut Reachable,
   idx: usize,
   mut work: Work<C>,
-  pats: Pats<C>,
+  pats: Pats<'_, C>,
 ) -> bool {
   match work.pop() {
     None => {
@@ -222,7 +226,7 @@ fn succeed_with<C: Con>(
   con: C,
   arg_pats: Vec<Pat<C>>,
   desc: Desc<C>,
-  pats: Pats<C>,
+  pats: Pats<'_, C>,
 ) -> bool {
   let arg_descs = match desc {
     Desc::Neg(_) => arg_pats.iter().map(|_| Desc::Neg(vec![])).collect(),
@@ -250,7 +254,7 @@ fn do_match<C: Con>(
   pat: Pat<C>,
   desc: Desc<C>,
   work: Work<C>,
-  pats: Pats<C>,
+  pats: Pats<'_, C>,
 ) -> bool {
   match pat {
     Pat::Anything => succeed(r, idx, augment(work, desc), pats),
