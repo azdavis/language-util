@@ -22,6 +22,9 @@
 #![deny(rust_2018_idioms)]
 #![deny(unsafe_code)]
 
+use rustc_hash::FxHashSet;
+use std::hash::Hash;
+
 /// A pattern.
 #[derive(Debug, Clone)]
 pub enum Pat<C> {
@@ -32,7 +35,7 @@ pub enum Pat<C> {
 }
 
 /// A constructor.
-pub trait Con: Clone + PartialEq<Self> {
+pub trait Con: Clone + Eq + Hash {
   /// Returns the span of this constructor.
   fn span(&self) -> Span;
 }
@@ -55,7 +58,13 @@ enum Desc<C> {
   /// described.
   Pos(C, Vec<Desc<C>>),
   /// We know that the match head is not any of these Con.
-  Neg(Vec<C>),
+  Neg(FxHashSet<C>),
+}
+
+impl<C> Default for Desc<C> {
+  fn default() -> Self {
+    Self::Neg(FxHashSet::default())
+  }
 }
 
 /// The return from `static_match`.
@@ -65,8 +74,8 @@ enum StaticMatch<C> {
   /// The Con is not consistent with the Desc.
   No,
   /// The Con might be consistent with the Desc. If this is returned, then the
-  /// Desc was Neg, and the Vec was the innards of the Neg.
-  Maybe(Vec<C>),
+  /// Desc was Neg.
+  Maybe(FxHashSet<C>),
 }
 
 /// An item in the work list.
@@ -121,7 +130,7 @@ pub enum Res {
 /// Patterns are matched in order from first to last.
 pub fn check<C: Con>(pats: &[Pat<C>]) -> Res {
   let mut r = vec![false; pats.len()];
-  if fail(&mut r, Desc::Neg(vec![]), pats.iter().enumerate()) {
+  if fail(&mut r, Desc::default(), pats.iter().enumerate()) {
     match r.iter().position(|&x| !x) {
       None => Res::Exhaustive,
       Some(idx) => Res::Unreachable(idx),
@@ -166,7 +175,7 @@ fn static_match<C: Con>(con: C, desc: &Desc<C>) -> StaticMatch<C> {
       }
     }
     Desc::Neg(cons) => {
-      if cons.iter().any(|c| c == &con) {
+      if cons.contains(&con) {
         StaticMatch::No
       } else if con.span() == Span::Finite(cons.len() + 1) {
         // This is the last con.
@@ -229,7 +238,7 @@ fn succeed_with<C: Con>(
   pats: Pats<'_, C>,
 ) -> bool {
   let arg_descs = match desc {
-    Desc::Neg(_) => arg_pats.iter().map(|_| Desc::Neg(vec![])).collect(),
+    Desc::Neg(_) => arg_pats.iter().map(|_| Desc::default()).collect(),
     Desc::Pos(_, descs) => descs,
   };
   assert_eq!(arg_pats.len(), arg_descs.len());
@@ -262,7 +271,7 @@ fn do_match<C: Con>(
       StaticMatch::Yes => succeed_with(r, idx, work, con, args, desc, pats),
       StaticMatch::No => fail(r, build_desc(desc, work), pats),
       StaticMatch::Maybe(mut cons) => {
-        cons.push(con.clone());
+        cons.insert(con.clone());
         succeed_with(r, idx, work.clone(), con, args, desc, pats.clone())
           && fail(r, build_desc(Desc::Neg(cons), work), pats)
       }
