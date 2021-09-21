@@ -116,8 +116,10 @@ pub enum Res {
   Unreachable(usize),
 }
 
-/// The main function, which the exported functions ultimately call.
-pub fn ck<C: Con>(pats: Vec<Pat<C>>) -> Res {
+/// Does the check.
+///
+/// Patterns are matched in order from first to last.
+pub fn check<C: Con>(pats: Vec<Pat<C>>) -> Res {
   let mut r = vec![false; pats.len()];
   if fail(&mut r, Desc::Neg(vec![]), pats.into_iter().enumerate()) {
     match r.iter().position(|&x| !x) {
