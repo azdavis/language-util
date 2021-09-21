@@ -206,7 +206,7 @@ fn fail<C: Con>(
   }
 }
 
-/// Tries to prove a pat located at the index is r. Sets that index to
+/// Tries to prove a pat located at the index is reachable. Sets that index to
 /// true if it can prove this. Returns whether the match was exhaustive.
 fn succeed<C: Con>(
   r: &mut Reachable,
