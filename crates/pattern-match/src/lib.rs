@@ -3,19 +3,19 @@
 //!
 //! Adapted from "ML pattern match compilation and partial evaluation" by Peter
 //! Sestoft.
-//!
-//! One who both has read his paper and this implementation will notice some
-//! differences between the two:
-//!
-//! - We don't compute an explicit decision tree because we're not compiling
-//!   anything.
-//! - We don't record access information because of the same.
-//! - We do keep track of matched patterns because we want to report which
-//!   pattern(s) are unreachable.
-//! - We switch around the order of some work lists (vectors) for efficiency.
-//! - We reorganize the types used to encode invariants. For instance, instead
-//!   of having two lists which ought to be the same length, have a single list
-//!   of structs with two fields.
+
+// One who both has read his paper and this implementation will notice some
+// differences between the two:
+//
+// - We don't compute an explicit decision tree because we're not compiling
+//   anything.
+// - We don't record access information because of the same.
+// - We do keep track of matched patterns because we want to report which
+//   pattern(s) are unreachable.
+// - We switch around the order of some work lists (vectors) for efficiency.
+// - We reorganize the types used to encode invariants. For instance, instead of
+//   having two lists which ought to be the same length, have a single list of
+//   structs with two fields.
 
 #![deny(missing_debug_implementations)]
 #![deny(missing_docs)]
