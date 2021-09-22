@@ -8,4 +8,4 @@ doctest = false
 test = false
 
 [dependencies]
-rowan = "0.12"
+rowan = "0.14"
