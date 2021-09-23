@@ -80,19 +80,19 @@ impl<'input, K> Parser<'input, K> {
   ///
   /// The events recorded since this syntax construct began, if any, will belong
   /// to the parent.
-  pub fn abandon(&mut self, mut entered: Entered) {
-    entered.bomb.defuse();
-    assert!(self.events[entered.idx].is_none());
+  pub fn abandon(&mut self, mut en: Entered) {
+    en.bomb.defuse();
+    assert!(self.events[en.idx].is_none());
   }
 
   /// Finishes parsing a syntax construct.
-  pub fn exit(&mut self, mut entered: Entered, kind: K) -> Exited {
-    entered.bomb.defuse();
-    let ev = &mut self.events[entered.idx];
+  pub fn exit(&mut self, mut en: Entered, kind: K) -> Exited {
+    en.bomb.defuse();
+    let ev = &mut self.events[en.idx];
     assert!(ev.is_none());
     *ev = Some(Event::Enter(kind, None));
     self.events.push(Some(Event::Exit));
-    Exited { idx: entered.idx }
+    Exited { idx: en.idx }
   }
 
   /// Starts parsing a syntax construct and makes it the parent of the given
@@ -102,14 +102,14 @@ impl<'input, K> Parser<'input, K> {
   /// we see an `<int>`, we enter and exit an `<expr>` node for it. But then
   /// we see the `+` and realize the completed `<expr>` node for the int should
   /// be the child of a node for the `+`. That's when this function comes in.
-  pub fn precede(&mut self, exited: Exited) -> Entered {
+  pub fn precede(&mut self, ex: Exited) -> Entered {
     let ret = self.enter();
-    match self.events[exited.idx] {
+    match self.events[ex.idx] {
       Some(Event::Enter(_, ref mut parent)) => {
         assert!(parent.is_none());
         *parent = Some(ret.idx);
       }
-      ref ev => unreachable!("{:?} preceded {:?}, not Enter", exited, ev),
+      ref ev => unreachable!("{:?} preceded {:?}, not Enter", ex, ev),
     }
     ret
   }
