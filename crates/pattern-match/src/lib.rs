@@ -214,21 +214,20 @@ fn succeed<C: Con>(
   mut work: Work<C>,
   pats: Pats<'_, C>,
 ) -> bool {
-  match work.pop() {
-    None => {
-      r[idx] = true;
-      true
-    }
-    Some(mut item) => match item.args.pop() {
+  loop {
+    match work.pop() {
       None => {
-        let work = augment(work, Desc::Pos(item.con, item.descs));
-        succeed(r, idx, work, pats)
+        r[idx] = true;
+        return true;
       }
-      Some(arg) => {
-        work.push(item);
-        do_match(r, idx, arg.pat, arg.desc, work, pats)
-      }
-    },
+      Some(mut item) => match item.args.pop() {
+        None => work = augment(work, Desc::Pos(item.con, item.descs)),
+        Some(arg) => {
+          work.push(item);
+          return do_match(r, idx, arg.pat, arg.desc, work, pats);
+        }
+      },
+    }
   }
 }
 
