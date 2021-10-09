@@ -171,15 +171,12 @@ where
   }
 
   /// Records an error at the current token, with an "expected `desc`" error
-  /// message, and bumps the next token if there is one.
+  /// message.
   pub fn error(&mut self, desc: &'static str) {
     self.error_(Expected::Custom(desc))
   }
 
   fn error_(&mut self, expected: Expected<K>) {
-    if self.peek().is_some() {
-      self.bump();
-    }
     self.events.push(Some(Event::Error(expected)));
   }
 
