@@ -8,7 +8,6 @@ mod raw;
 
 use raw::SyntaxNodePtr;
 use rowan::{Language, SyntaxNode};
-use std::convert::TryInto;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 

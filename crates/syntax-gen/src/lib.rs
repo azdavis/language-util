@@ -235,7 +235,6 @@ where
 
     use crate::kind::{SyntaxKind as SK, SyntaxNode, SyntaxToken, #lang};
     use ast_ptr::HasLanguage;
-    use std::convert::{TryFrom, TryInto};
 
     #[allow(unused)]
     fn tokens<P>(parent: &P, kind: SK) -> impl Iterator<Item = SyntaxToken>
