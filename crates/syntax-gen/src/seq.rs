@@ -20,21 +20,18 @@ pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
     impl #name {
       #(#fields)*
     }
-    impl HasLanguage for #name {
+    impl AstNode for #name {
       type Language = #lang;
-    }
-    impl TryFrom<SyntaxNode> for #name {
-      type Error = ();
-      fn try_from(node: SyntaxNode) -> Result<Self, Self::Error> {
-        if node.kind() == SK::#name {
-          Ok(Self(node))
-        } else {
-          Err(())
-        }
+
+      fn can_cast(kind: SK) -> bool {
+        kind == SK::#name
       }
-    }
-    impl AsRef<SyntaxNode> for #name {
-      fn as_ref(&self) -> &SyntaxNode {
+
+      fn cast(node: SyntaxNode) -> Option<Self> {
+        (node.kind() == SK::#name).then(|| Self(node))
+      }
+
+      fn syntax(&self) -> &SyntaxNode {
         &self.0
       }
     }

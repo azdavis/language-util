@@ -38,7 +38,6 @@ use ungrammar::{Grammar, Rule};
 ///
 /// - `rowan` from crates.io
 /// - `token` from language-util
-/// - `ast-ptr` from language-util
 ///
 /// The files will be formatted with rustfmt.
 ///
@@ -234,15 +233,15 @@ where
     #![doc = "Abstract syntax trees."]
 
     use crate::kind::{SyntaxKind as SK, SyntaxNode, SyntaxToken, #lang};
-    use ast_ptr::HasLanguage;
+    use rowan::ast::AstNode;
 
     #[allow(unused)]
     fn tokens<P>(parent: &P, kind: SK) -> impl Iterator<Item = SyntaxToken>
     where
-      P: AsRef<SyntaxNode>,
+      P: AstNode<Language = #lang>,
     {
       parent
-        .as_ref()
+        .syntax()
         .children_with_tokens()
         .filter_map(rowan::NodeOrToken::into_token)
         .filter(move |tok| tok.kind() == kind)
@@ -251,11 +250,11 @@ where
     #[allow(unused)]
     fn token_children<P, C>(parent: &P) -> impl Iterator<Item = C>
     where
-      P: AsRef<SyntaxNode>,
+      P: AstNode<Language = #lang>,
       SyntaxToken: TryInto<C>,
     {
       parent
-        .as_ref()
+        .syntax()
         .children_with_tokens()
         .filter_map(rowan::NodeOrToken::into_token)
         .filter_map(|x| x.try_into().ok())
@@ -264,10 +263,10 @@ where
     #[allow(unused)]
     fn node_children<P, C>(parent: &P) -> impl Iterator<Item = C>
     where
-      P: AsRef<SyntaxNode>,
-      SyntaxNode: TryInto<C>,
+      P: AstNode<Language = #lang>,
+      C: AstNode<Language = #lang>,
     {
-      parent.as_ref().children().filter_map(|x| x.try_into().ok())
+      parent.syntax().children().filter_map(C::cast)
     }
 
     #(#types)*

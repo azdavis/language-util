@@ -23,33 +23,36 @@ pub(crate) fn get(
 fn get_nodes(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
   let lang = &cx.lang;
   let mut defs = Vec::with_capacity(rules.len());
+  let mut kinds = Vec::with_capacity(rules.len());
   let mut casts = Vec::with_capacity(rules.len());
   let mut syntaxes = Vec::with_capacity(rules.len());
   for rule in rules {
     let name = ident(&cx.grammar[unwrap_node(rule)].name);
     defs.push(quote! { #name(#name) });
+    kinds.push(quote! { SK::#name });
     casts.push(quote! { SK::#name => Self::#name(#name(node)) });
-    syntaxes.push(quote! { Self::#name(x) => x.as_ref() });
+    syntaxes.push(quote! { Self::#name(x) => x.syntax() });
   }
   quote! {
     pub enum #name {
       #(#defs ,)*
     }
-    impl HasLanguage for #name {
+    impl AstNode for #name {
       type Language = #lang;
-    }
-    impl TryFrom<SyntaxNode> for #name {
-      type Error = ();
-      fn try_from(node: SyntaxNode) -> Result<Self, Self::Error> {
+
+      fn can_cast(kind: SK) -> bool {
+        matches!(kind, #(#kinds)|*)
+      }
+
+      fn cast(node: SyntaxNode) -> Option<Self> {
         let ret = match node.kind() {
           #(#casts ,)*
-          _ => return Err(()),
+          _ => return None,
         };
-        Ok(ret)
+        Some(ret)
       }
-    }
-    impl AsRef<SyntaxNode> for #name {
-      fn as_ref(&self) -> &SyntaxNode {
+
+      fn syntax(&self) -> &SyntaxNode {
         match self {
           #(#syntaxes ,)*
         }
@@ -59,7 +62,6 @@ fn get_nodes(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
 }
 
 fn get_tokens(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
-  let lang = &cx.lang;
   let name_kind = format_ident!("{}Kind", name);
   let mut defs = Vec::with_capacity(rules.len());
   let mut casts = Vec::with_capacity(rules.len());
@@ -86,9 +88,6 @@ fn get_tokens(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
     pub struct #name {
       pub token: SyntaxToken,
       pub kind: #name_kind,
-    }
-    impl HasLanguage for #name {
-      type Language = #lang;
     }
     impl TryFrom<SyntaxToken> for #name {
       type Error = ();
