@@ -233,7 +233,7 @@ where
     #![doc = "Abstract syntax trees."]
 
     use crate::kind::{SyntaxKind as SK, SyntaxNode, SyntaxToken, #lang};
-    use rowan::ast::AstNode;
+    pub use rowan::ast::{AstNode, AstPtr};
 
     #[allow(unused)]
     fn tokens<P>(parent: &P, kind: SK) -> impl Iterator<Item = SyntaxToken>
