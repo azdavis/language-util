@@ -50,8 +50,8 @@ impl<'input, K> Parser<'input, K> {
 
   /// Starts parsing a syntax construct.
   ///
-  /// The returned [`Entered`] must eventually be passed to [`Self::exit`] or
-  /// [`Self::abandon`]. If it is not, it will panic when dropped.
+  /// The returned [`Entered`] must eventually be passed to [`Parser::exit`] or
+  /// [`Parser::abandon`]. If it is not, it will panic when dropped.
   ///
   /// `Entered`s returned from `enter` should be consumed with `exit` or
   /// `abandon` in a FIFO manner. That is, the first most recently created
@@ -122,7 +122,7 @@ where
   /// Returns the token after the "current" token, or `None` if the parser is
   /// out of tokens.
   ///
-  /// Equivalent to `self.peek_n(0)`. See [`Self::peek_n`].
+  /// Equivalent to `self.peek_n(0)`. See [`Parser::peek_n`].
   pub fn peek(&mut self) -> Option<Token<'input, K>> {
     while let Some(&tok) = self.tokens.get(self.idx) {
       if tok.kind.is_trivia() {
@@ -140,11 +140,6 @@ where
   /// The current token is the first token not yet consumed for which
   /// [`Triviable::is_trivia`] returns `true`; thus, if this returns
   /// `Some(tok)`, then `tok.kind.is_trivia()` is `false`.
-  ///
-  /// Note that it is not recommended to match on the `K` inside to e.g.
-  /// determine what syntax construct to parse next. Using [`Self::at`] is
-  /// better for this task since it keeps track of the `K`s that have been tried
-  /// and will report them from [`Self::error`].
   pub fn peek_n(&mut self, n: usize) -> Option<Token<'input, K>> {
     let mut ret = self.peek();
     let idx = self.idx;
@@ -158,10 +153,10 @@ where
 
   /// Consumes and returns the current token.
   ///
-  /// Panics if there are no more tokens, i.e. if [`Self::peek`] would return
+  /// Panics if there are no more tokens, i.e. if [`Parser::peek`] would return
   /// `None` just prior to calling this.
   ///
-  /// This is often used after calling [`Self::at`] to verify some expected
+  /// This is often used after calling [`Parser::at`] to verify some expected
   /// token was present.
   pub fn bump(&mut self) -> Token<'input, K> {
     let ret = self.peek().expect("bump with no tokens");
