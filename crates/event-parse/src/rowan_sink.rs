@@ -10,7 +10,7 @@ use token::Token;
 #[derive(Debug)]
 pub struct RowanSink<K> {
   builder: GreenNodeBuilder<'static>,
-  range: Option<TextRange>,
+  range: TextRange,
   errors: Vec<Error<K>>,
 }
 
@@ -28,7 +28,7 @@ impl<K> Default for RowanSink<K> {
   fn default() -> Self {
     Self {
       builder: GreenNodeBuilder::default(),
-      range: None,
+      range: TextRange::empty(0.into()),
       errors: Vec::new(),
     }
   }
@@ -44,9 +44,9 @@ where
 
   fn token(&mut self, token: Token<'_, K>) {
     self.builder.token(token.kind.into(), token.text);
-    let start = self.range.as_ref().map_or(0.into(), |range| range.end());
+    let start = self.range.end();
     let end = start + TextSize::of(token.text);
-    self.range = Some(TextRange::new(start, end));
+    self.range = TextRange::new(start, end);
   }
 
   fn exit(&mut self) {
@@ -55,7 +55,7 @@ where
 
   fn error(&mut self, expected: Expected<K>) {
     self.errors.push(Error {
-      range: self.range.expect("error with no tokens"),
+      range: self.range,
       expected,
     });
   }
