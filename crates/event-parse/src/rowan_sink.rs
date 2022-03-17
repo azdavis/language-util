@@ -12,15 +12,29 @@ pub struct RowanSink<K> {
   builder: GreenNodeBuilder<'static>,
   range: TextRange,
   errors: Vec<Error<K>>,
+  expected: Vec<Expected<K>>,
 }
 
 impl<K> RowanSink<K> {
   /// Finish the builder.
-  pub fn finish<L>(self) -> (SyntaxNode<L>, Vec<Error<K>>)
+  pub fn finish<L>(mut self) -> (SyntaxNode<L>, Vec<Error<K>>)
   where
     L: Language,
   {
-    (SyntaxNode::new_root(self.builder.finish()), self.errors)
+    self.extend_errors();
+    let root = SyntaxNode::new_root(self.builder.finish());
+    (root, self.errors)
+  }
+
+  fn extend_errors(&mut self) {
+    let errors =
+      std::mem::take(&mut self.expected)
+        .into_iter()
+        .map(|expected| Error {
+          range: self.range,
+          expected,
+        });
+    self.errors.extend(errors);
   }
 }
 
@@ -30,6 +44,7 @@ impl<K> Default for RowanSink<K> {
       builder: GreenNodeBuilder::default(),
       range: TextRange::empty(0.into()),
       errors: Vec::new(),
+      expected: Vec::new(),
     }
   }
 }
@@ -47,6 +62,7 @@ where
     let start = self.range.end();
     let end = start + TextSize::of(token.text);
     self.range = TextRange::new(start, end);
+    self.extend_errors();
   }
 
   fn exit(&mut self) {
@@ -54,10 +70,7 @@ where
   }
 
   fn error(&mut self, expected: Expected<K>) {
-    self.errors.push(Error {
-      range: self.range,
-      expected,
-    });
+    self.expected.push(expected);
   }
 }
 
