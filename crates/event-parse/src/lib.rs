@@ -34,7 +34,7 @@ use token::{Token, Triviable};
 #[derive(Debug)]
 pub struct Parser<'input, K> {
   tokens: &'input [Token<'input, K>],
-  idx: usize,
+  tok_idx: usize,
   events: Vec<Option<Event<K>>>,
 }
 
@@ -43,7 +43,7 @@ impl<'input, K> Parser<'input, K> {
   pub fn new(tokens: &'input [Token<'input, K>]) -> Self {
     Self {
       tokens,
-      idx: 0,
+      tok_idx: 0,
       events: Vec::new(),
     }
   }
@@ -68,12 +68,12 @@ impl<'input, K> Parser<'input, K> {
   ///
   /// then Weird Things might happen.
   pub fn enter(&mut self) -> Entered {
-    let idx = self.events.len();
+    let ev_idx = self.events.len();
     self.events.push(None);
     Entered {
       bomb: DropBomb::new("Entered markers must be exited"),
-      idx,
-      tok_idx: self.idx,
+      ev_idx,
+      tok_idx: self.tok_idx,
     }
   }
 
@@ -83,19 +83,19 @@ impl<'input, K> Parser<'input, K> {
   /// to the parent.
   pub fn abandon(&mut self, mut en: Entered) {
     en.bomb.defuse();
-    assert!(self.events[en.idx].is_none());
+    assert!(self.events[en.ev_idx].is_none());
   }
 
   /// Finishes parsing a syntax construct.
   pub fn exit(&mut self, mut en: Entered, kind: K) -> Exited {
     en.bomb.defuse();
-    let ev = &mut self.events[en.idx];
+    let ev = &mut self.events[en.ev_idx];
     assert!(ev.is_none());
     *ev = Some(Event::Enter(kind, None));
     self.events.push(Some(Event::Exit));
     Exited {
-      idx: en.idx,
-      is_empty: self.idx == en.tok_idx,
+      ev_idx: en.ev_idx,
+      is_empty: self.tok_idx == en.tok_idx,
     }
   }
 
@@ -108,10 +108,10 @@ impl<'input, K> Parser<'input, K> {
   /// be the child of a node for the `+`. That's when this function comes in.
   pub fn precede(&mut self, ex: Exited) -> Entered {
     let ret = self.enter();
-    match self.events[ex.idx] {
+    match self.events[ex.ev_idx] {
       Some(Event::Enter(_, ref mut parent)) => {
         assert!(parent.is_none());
-        *parent = Some(ret.idx);
+        *parent = Some(ret.ev_idx);
       }
       ref ev => unreachable!("{:?} preceded {:?}, not Enter", ex, ev),
     }
@@ -128,9 +128,9 @@ where
   ///
   /// Equivalent to `self.peek_n(0)`. See [`Parser::peek_n`].
   pub fn peek(&mut self) -> Option<Token<'input, K>> {
-    while let Some(&tok) = self.tokens.get(self.idx) {
+    while let Some(&tok) = self.tokens.get(self.tok_idx) {
       if tok.kind.is_trivia() {
-        self.idx += 1;
+        self.tok_idx += 1;
       } else {
         return Some(tok);
       }
@@ -146,12 +146,12 @@ where
   /// `Some(tok)`, then `tok.kind.is_trivia()` is `false`.
   pub fn peek_n(&mut self, n: usize) -> Option<Token<'input, K>> {
     let mut ret = self.peek();
-    let idx = self.idx;
+    let old_tok_idx = self.tok_idx;
     for _ in 0..n {
-      self.idx += 1;
+      self.tok_idx += 1;
       ret = self.peek();
     }
-    self.idx = idx;
+    self.tok_idx = old_tok_idx;
     ret
   }
 
@@ -165,7 +165,7 @@ where
   pub fn bump(&mut self) -> Token<'input, K> {
     let ret = self.peek().expect("bump with no tokens");
     self.events.push(Some(Event::Token));
-    self.idx += 1;
+    self.tok_idx += 1;
     ret
   }
 
@@ -180,18 +180,18 @@ where
   }
 
   fn eat_trivia(&mut self, sink: &mut dyn Sink<K>) {
-    while let Some(&tok) = self.tokens.get(self.idx) {
+    while let Some(&tok) = self.tokens.get(self.tok_idx) {
       if !tok.kind.is_trivia() {
         break;
       }
       sink.token(tok);
-      self.idx += 1;
+      self.tok_idx += 1;
     }
   }
 
   /// Finishes parsing, and writes the parsed tree into the `sink`.
   pub fn finish(mut self, sink: &mut dyn Sink<K>) {
-    self.idx = 0;
+    self.tok_idx = 0;
     let mut kinds = Vec::new();
     let mut levels: usize = 0;
     for idx in 0..self.events.len() {
@@ -233,8 +233,8 @@ where
         }
         Event::Token => {
           self.eat_trivia(sink);
-          sink.token(self.tokens[self.idx]);
-          self.idx += 1;
+          sink.token(self.tokens[self.tok_idx]);
+          self.tok_idx += 1;
         }
         Event::Error(expected) => sink.error(expected),
       }
@@ -269,7 +269,7 @@ where
 #[derive(Debug)]
 pub struct Entered {
   bomb: DropBomb,
-  idx: usize,
+  ev_idx: usize,
   tok_idx: usize,
 }
 
@@ -291,7 +291,7 @@ pub struct Entered {
 /// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Exited {
-  idx: usize,
+  ev_idx: usize,
   is_empty: bool,
 }
 
