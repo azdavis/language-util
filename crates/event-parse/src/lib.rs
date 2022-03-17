@@ -73,6 +73,7 @@ impl<'input, K> Parser<'input, K> {
     Entered {
       bomb: DropBomb::new("Entered markers must be exited"),
       idx,
+      tok_idx: self.idx,
     }
   }
 
@@ -92,7 +93,10 @@ impl<'input, K> Parser<'input, K> {
     assert!(ev.is_none());
     *ev = Some(Event::Enter(kind, None));
     self.events.push(Some(Event::Exit));
-    Exited { idx: en.idx }
+    Exited {
+      idx: en.idx,
+      is_empty: self.idx == en.tok_idx,
+    }
   }
 
   /// Starts parsing a syntax construct and makes it the parent of the given
@@ -266,6 +270,7 @@ where
 pub struct Entered {
   bomb: DropBomb,
   idx: usize,
+  tok_idx: usize,
 }
 
 /// A marker for a syntax construct that has been fully parsed.
@@ -287,6 +292,14 @@ pub struct Entered {
 #[derive(Debug, Clone, Copy)]
 pub struct Exited {
   idx: usize,
+  is_empty: bool,
+}
+
+impl Exited {
+  /// Returns whether there are no tokens in the node closed by this [`Exited`].
+  pub fn is_empty(&self) -> bool {
+    self.is_empty
+  }
 }
 
 /// Types which can construct a syntax tree.
