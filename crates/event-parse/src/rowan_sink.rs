@@ -4,7 +4,7 @@ use crate::{Expected, Sink};
 use rowan::{
   GreenNodeBuilder, Language, SyntaxKind, SyntaxNode, TextRange, TextSize,
 };
-use token::Token;
+use token::{Token, Triviable};
 
 /// The sink, which wraps a Rowan `GreenNodeBuilder`.
 #[derive(Debug)]
@@ -51,18 +51,21 @@ impl<K> Default for RowanSink<K> {
 
 impl<K> Sink<K> for RowanSink<K>
 where
-  K: Into<SyntaxKind>,
+  K: Into<SyntaxKind> + Triviable,
 {
   fn enter(&mut self, kind: K) {
     self.builder.start_node(kind.into());
   }
 
   fn token(&mut self, token: Token<'_, K>) {
+    let is_trivia = token.kind.is_trivia();
     self.builder.token(token.kind.into(), token.text);
     let start = self.range.end();
     let end = start + TextSize::of(token.text);
     self.range = TextRange::new(start, end);
-    self.extend_errors();
+    if !is_trivia {
+      self.extend_errors();
+    }
   }
 
   fn exit(&mut self) {
