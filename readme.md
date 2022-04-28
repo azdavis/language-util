@@ -7,6 +7,10 @@ Most (all?) of these crates used to be from [c0ls][], but they are generic
 enough that they were moved out of it so that they may be re-used in other
 language servers.
 
+## `char-name`
+
+Report the name of some punctuation characters.
+
 ## `event-parse`
 
 A generic framework for writing event-based parsers. Such parsers are ones that
@@ -20,6 +24,10 @@ of tokens:
 
 This also lets us handle trivia (whitespace, comments) in one place rather than
 all over the parser.
+
+## `identifier-case`
+
+Turn `PascalCase` into `snake_case` and vice versa.
 
 ## `pattern-match`
 
