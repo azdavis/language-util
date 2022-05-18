@@ -1,7 +1,7 @@
 //! The bridge between lexing and parsing.
 
 /// A token, a pair of syntax kind and text.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Token<'a, K> {
   /// The kind of token.
   pub kind: K,
