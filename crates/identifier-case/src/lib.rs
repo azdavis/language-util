@@ -3,7 +3,7 @@
 /// Works with either upper or lower snake case.
 ///
 /// ```
-/// # use syntax_gen::identifier_case::snake_to_pascal;
+/// # use identifier_case::snake_to_pascal;
 /// assert_eq!(snake_to_pascal("fella"), "Fella");
 /// assert_eq!(snake_to_pascal("the_best"), "TheBest");
 /// assert_eq!(snake_to_pascal("HEY_THERE_DUDE"), "HeyThereDude");
@@ -27,7 +27,7 @@ pub fn snake_to_pascal(s: &str) -> String {
 /// Also works for camelCase.
 ///
 ///```
-/// # use syntax_gen::identifier_case::pascal_to_snake;
+/// # use identifier_case::pascal_to_snake;
 /// assert_eq!(pascal_to_snake("Hey"), "hey");
 /// assert_eq!(pascal_to_snake("FooBar"), "foo_bar");
 /// assert_eq!(pascal_to_snake("readFile"), "read_file");
