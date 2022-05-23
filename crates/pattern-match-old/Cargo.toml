@@ -1,5 +1,5 @@
 [package]
-name = "pattern-match"
+name = "pattern-match-old"
 version = "0.1.0"
 edition = "2021"
 
