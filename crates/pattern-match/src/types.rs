@@ -80,7 +80,7 @@ impl<L: Lang> Pat<L> {
     Self::con_(con, Vec::new(), Some(idx))
   }
 
-  pub(super) fn con_(
+  pub(crate) fn con_(
     con: L::Con,
     args: Vec<Self>,
     idx: Option<L::PatIdx>,

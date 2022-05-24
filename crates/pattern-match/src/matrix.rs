@@ -1,9 +1,9 @@
 //! See [`Matrix`].
 
-use super::types::{Lang, Pat, RawPat};
+use crate::types::{Lang, Pat, RawPat};
 
 /// A 2-D matrix of [`Pat`]s.
-pub(super) struct Matrix<L: Lang> {
+pub(crate) struct Matrix<L: Lang> {
   /// invariant: all rows are the same length.
   rows: Vec<Row<L>>,
 }
@@ -24,17 +24,17 @@ impl<L: Lang> Clone for Matrix<L> {
 
 impl<L: Lang> Matrix<L> {
   /// Returns the number of rows.
-  pub(super) fn num_rows(&self) -> usize {
+  pub(crate) fn num_rows(&self) -> usize {
     self.rows.len()
   }
 
   /// Returns the number of columns, or `None` if there are no rows.
-  pub(super) fn num_cols(&self) -> Option<usize> {
+  pub(crate) fn num_cols(&self) -> Option<usize> {
     self.rows.first().map(Row::len)
   }
 
   /// Returns an iterator over the non-empty rows. Panics if the rows are empty.
-  pub(super) fn non_empty_rows(&self) -> impl Iterator<Item = &NonEmptyRow<L>> {
+  pub(crate) fn non_empty_rows(&self) -> impl Iterator<Item = &NonEmptyRow<L>> {
     self.rows.iter().map(|r| match r {
       Row::Empty => panic!("empty row"),
       Row::NonEmpty(r) => r,
@@ -48,7 +48,7 @@ impl<L: Lang> Matrix<L> {
   ///
   /// Panics if `row.len()` is not equal to the number of columns in this
   /// matrix.
-  pub(super) fn push(&mut self, mut row: Vec<Pat<L>>) {
+  pub(crate) fn push(&mut self, mut row: Vec<Pat<L>>) {
     if let Some(nc) = self.num_cols() {
       assert_eq!(nc, row.len());
     }
@@ -95,7 +95,7 @@ impl<L: Lang> Row<L> {
 
 /// An non-empty row, whose last element is a non-or pattern with the given
 /// constructor and arguments.
-pub(super) struct NonEmptyRow<L: Lang> {
+pub(crate) struct NonEmptyRow<L: Lang> {
   /// The other patterns in this row.
   pub pats: Vec<Pat<L>>,
   /// The constructor of the last pattern, which is not an or-pattern.
