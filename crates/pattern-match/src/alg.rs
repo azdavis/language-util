@@ -1,26 +1,8 @@
 //! The main algorithm.
 
 use super::matrix::Matrix;
-use super::types::{Lang, Pat, RawPat};
+use super::types::{Check, Lang, Pat, RawPat};
 use rustc_hash::FxHashSet;
-use std::fmt;
-
-/// The result of checking.
-pub struct Check<L: Lang> {
-  /// The indices of unreachable patterns.
-  pub unreachable: FxHashSet<L::PatIdx>,
-  /// Some patterns that weren't covered by the match.
-  pub missing: Vec<Pat<L>>,
-}
-
-impl<L: Lang> fmt::Debug for Check<L> {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.debug_struct("Check")
-      .field("unreachable", &self.unreachable)
-      .field("missing", &self.missing)
-      .finish()
-  }
-}
 
 /// Does the check.
 pub fn check<L: Lang>(lang: &L, pats: Vec<Pat<L>>, ty: L::Ty) -> Check<L> {

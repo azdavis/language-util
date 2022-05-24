@@ -10,9 +10,9 @@
 #![deny(missing_docs)]
 #![deny(rust_2018_idioms)]
 
-mod matching;
+mod alg;
 mod matrix;
 mod types;
 
-pub use matching::{check, Check};
-pub use types::{Lang, Pat, RawPat};
+pub use alg::check;
+pub use types::{Check, Lang, Pat, RawPat};
