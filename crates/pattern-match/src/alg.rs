@@ -78,7 +78,6 @@ fn useful<L: Lang>(
         let mut val = val.clone();
         val.push((pat, ty.clone()));
         ret.extend(useful(lang, ac, &matrix, val.clone()));
-        // see `or::unreachable_smoke`
         matrix.push(val.into_iter().map(|x| x.0).collect());
       }
     }
