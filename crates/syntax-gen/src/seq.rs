@@ -9,17 +9,25 @@ pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
   let lang = &cx.lang;
   let mut counts = Counts::default();
   let fields = rules.iter().map(|rule| field(cx, &mut counts, rule));
-  let derives = if name == "Root" {
-    quote! { #[derive(Debug, Clone)] }
-  } else {
-    quote! {}
-  };
+  let mut derives = quote! {};
+  let mut extra_impl = quote! {};
+  if name == "Root" {
+    derives = quote! { #[derive(Clone)] };
+    extra_impl = quote! {
+      impl std::fmt::Debug for #name {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+          self.syntax().fmt(f)
+        }
+      }
+    }
+  }
   quote! {
     #derives
     pub struct #name(SyntaxNode);
     impl #name {
       #(#fields)*
     }
+    #extra_impl
     impl AstNode for #name {
       type Language = #lang;
 
