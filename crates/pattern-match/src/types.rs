@@ -4,6 +4,19 @@ use rustc_hash::FxHashSet;
 use std::fmt::{self, Debug};
 use std::hash::Hash;
 
+/// std's Result with our [`CheckError`].
+pub type Result<T, E = CheckError> = std::result::Result<T, E>;
+
+/// An error occurred while checking.
+#[derive(Debug)]
+pub struct CheckError;
+
+impl fmt::Display for CheckError {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    f.write_str("could not check pattern match")
+  }
+}
+
 /// The result of checking.
 pub struct Check<L: Lang> {
   /// The indices of unreachable patterns.
