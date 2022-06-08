@@ -7,7 +7,7 @@ use std::hash::Hash;
 /// std's Result with our [`CheckError`].
 pub type Result<T, E = CheckError> = std::result::Result<T, E>;
 
-/// An error occurred while checking.
+/// An error that occurred while checking.
 #[derive(Debug)]
 pub struct CheckError;
 
@@ -56,14 +56,18 @@ pub trait Lang {
     ty: &Self::Ty,
     con: &Self::Con,
     cons: I,
-  ) -> Vec<Self::Con>
+  ) -> Result<Vec<Self::Con>>
   where
     Self::Con: 'a,
     I: Iterator<Item = &'a Self::Con>;
 
   /// Returns the types of the arguments to a constructor pattern with the given
   /// type `ty` and constructor `con`.
-  fn get_arg_tys(&self, ty: &Self::Ty, con: &Self::Con) -> Vec<Self::Ty>;
+  fn get_arg_tys(
+    &self,
+    ty: &Self::Ty,
+    con: &Self::Con,
+  ) -> Result<Vec<Self::Ty>>;
 }
 
 /// A pattern.

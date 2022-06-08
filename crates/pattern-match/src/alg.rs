@@ -89,7 +89,7 @@ fn useful<L: Lang>(
     }
     RawPat::Con(p_con, p_args) => {
       let last_col = matrix.non_empty_rows().map(|r| &r.con);
-      for con in lang.split(&ty, &p_con, last_col) {
+      for con in lang.split(&ty, &p_con, last_col)? {
         let mut m = Matrix::default();
         for row in matrix.non_empty_rows() {
           let new = specialize(lang, &ty, &row.con, &row.args, &con)?;
@@ -137,14 +137,14 @@ fn specialize<L: Lang>(
 ) -> Result<Option<TypedPatVec<L>>> {
   let ret: Vec<_> = if *pat_con == lang.any() {
     assert!(pat_args.is_empty());
-    let tys = lang.get_arg_tys(ty, val_con);
+    let tys = lang.get_arg_tys(ty, val_con)?;
     tys
       .into_iter()
       .map(|t| (Pat::any_no_idx(lang), t))
       .rev()
       .collect()
   } else if val_con == pat_con {
-    let tys = lang.get_arg_tys(ty, val_con);
+    let tys = lang.get_arg_tys(ty, val_con)?;
     assert_eq!(tys.len(), pat_args.len());
     pat_args.iter().cloned().zip(tys).rev().collect()
   } else {
