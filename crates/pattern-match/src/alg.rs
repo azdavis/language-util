@@ -5,19 +5,22 @@ use crate::types::{Check, Lang, Pat, RawPat, Result};
 use rustc_hash::FxHashSet;
 
 /// Does the check.
-pub fn check<L: Lang>(lang: &L, pats: Vec<Pat<L>>, ty: L::Ty) -> Check<L> {
+pub fn check<L: Lang>(
+  lang: &L,
+  pats: Vec<Pat<L>>,
+  ty: L::Ty,
+) -> Result<Check<L>> {
   let mut ac = FxHashSet::default();
   for pat in pats.iter() {
     get_pat_indices(&mut ac, pat);
   }
   let mut matrix = Matrix::default();
   for pat in pats {
-    useful(lang, &mut ac, &matrix, vec![(pat.clone(), ty.clone())]).unwrap();
+    useful(lang, &mut ac, &matrix, vec![(pat.clone(), ty.clone())])?;
     matrix.push(vec![pat]);
   }
   let missing: Vec<_> =
-    useful(lang, &mut ac, &matrix, vec![(Pat::any_no_idx(lang), ty)])
-      .unwrap()
+    useful(lang, &mut ac, &matrix, vec![(Pat::any_no_idx(lang), ty)])?
       .witnesses
       .into_iter()
       .map(|mut w| {
@@ -25,10 +28,10 @@ pub fn check<L: Lang>(lang: &L, pats: Vec<Pat<L>>, ty: L::Ty) -> Check<L> {
         w.pop().expect("just checked length")
       })
       .collect();
-  Check {
+  Ok(Check {
     unreachable: ac,
     missing,
-  }
+  })
 }
 
 struct Useful<P> {
