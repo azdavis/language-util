@@ -21,7 +21,7 @@ pub fn check<L: Lang>(lang: &L, pats: Vec<Pat<L>>, ty: L::Ty) -> Check<L> {
       .into_iter()
       .map(|mut w| {
         assert_eq!(w.len(), 1);
-        w.pop().unwrap()
+        w.pop().expect("just checked length")
       })
       .collect();
   Check {
