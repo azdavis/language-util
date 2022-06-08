@@ -1,7 +1,7 @@
 //! The main algorithm.
 
 use crate::matrix::Matrix;
-use crate::types::{Check, Lang, Pat, RawPat, Result};
+use crate::types::{Check, CheckError, Lang, Pat, RawPat, Result};
 use rustc_hash::FxHashSet;
 
 /// Does the check.
@@ -136,7 +136,9 @@ fn specialize<L: Lang>(
   val_con: &L::Con,
 ) -> Result<Option<TypedPatVec<L>>> {
   let ret: Vec<_> = if *pat_con == lang.any() {
-    assert!(pat_args.is_empty());
+    if !pat_args.is_empty() {
+      return Err(CheckError);
+    }
     let tys = lang.get_arg_tys(ty, val_con)?;
     tys
       .into_iter()
@@ -145,7 +147,9 @@ fn specialize<L: Lang>(
       .collect()
   } else if val_con == pat_con {
     let tys = lang.get_arg_tys(ty, val_con)?;
-    assert_eq!(tys.len(), pat_args.len());
+    if tys.len() != pat_args.len() {
+      return Err(CheckError);
+    }
     pat_args.iter().cloned().zip(tys).rev().collect()
   } else {
     return Ok(None);
