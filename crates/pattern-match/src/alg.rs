@@ -5,6 +5,11 @@ use crate::types::{Check, CheckError, Lang, Pat, RawPat, Result};
 use rustc_hash::FxHashSet;
 
 /// Does the check.
+///
+/// Returns an error if the patterns or types passed don't make sense, or if the
+/// `lang` returned an error.
+///
+/// This should never panic. It's a bug if this panics.
 pub fn check<L: Lang>(
   lang: &L,
   pats: Vec<Pat<L>>,
@@ -123,10 +128,11 @@ fn useful<L: Lang>(
 
 /// Specializes a constructor pat.
 ///
-/// The pat
+/// The pat:
+///
 /// - has type `ty`;
 /// - has been broken into its constituent constructor `pat_con` and arguments
-/// `pat_args`;
+///   `pat_args`;
 /// - is specialized with the given other value constructor `val_con`.
 fn specialize<L: Lang>(
   lang: &L,
