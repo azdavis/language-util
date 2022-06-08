@@ -89,14 +89,14 @@ fn useful<L: Lang>(
       for con in lang.split(&ty, &p_con, last_col) {
         let mut m = Matrix::default();
         for row in matrix.non_empty_rows() {
-          let new = specialize(lang, &ty, &row.con, &row.args, &con);
+          let new = specialize(lang, &ty, &row.con, &row.args, &con)?;
           if let Some(new) = new {
             let mut pats = row.pats.clone();
             pats.extend(new.into_iter().map(|x| x.0));
             m.push(pats);
           }
         }
-        let new = specialize(lang, &ty, &p_con, &p_args, &con)
+        let new = specialize(lang, &ty, &p_con, &p_args, &con)?
           .expect("p_con must cover itself");
         let new_len = new.len();
         let mut val = val.clone();
@@ -131,7 +131,7 @@ fn specialize<L: Lang>(
   pat_con: &L::Con,
   pat_args: &[Pat<L>],
   val_con: &L::Con,
-) -> Option<TypedPatVec<L>> {
+) -> Result<Option<TypedPatVec<L>>> {
   let ret: Vec<_> = if *pat_con == lang.any() {
     assert!(pat_args.is_empty());
     let tys = lang.get_arg_tys(ty, val_con);
@@ -145,9 +145,9 @@ fn specialize<L: Lang>(
     assert_eq!(tys.len(), pat_args.len());
     pat_args.iter().cloned().zip(tys).rev().collect()
   } else {
-    return None;
+    return Ok(None);
   };
-  Some(ret)
+  Ok(Some(ret))
 }
 
 /// Adds all the pat indices in the Pat to the set.
