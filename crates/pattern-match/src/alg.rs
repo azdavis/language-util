@@ -1,7 +1,7 @@
 //! The main algorithm.
 
 use crate::matrix::Matrix;
-use crate::types::{Check, Lang, Pat, RawPat};
+use crate::types::{Check, Lang, Pat, RawPat, Result};
 use rustc_hash::FxHashSet;
 
 /// Does the check.
@@ -12,11 +12,12 @@ pub fn check<L: Lang>(lang: &L, pats: Vec<Pat<L>>, ty: L::Ty) -> Check<L> {
   }
   let mut matrix = Matrix::default();
   for pat in pats {
-    useful(lang, &mut ac, &matrix, vec![(pat.clone(), ty.clone())]);
+    useful(lang, &mut ac, &matrix, vec![(pat.clone(), ty.clone())]).unwrap();
     matrix.push(vec![pat]);
   }
   let missing: Vec<_> =
     useful(lang, &mut ac, &matrix, vec![(Pat::any_no_idx(lang), ty)])
+      .unwrap()
       .witnesses
       .into_iter()
       .map(|mut w| {
@@ -59,16 +60,16 @@ fn useful<L: Lang>(
   ac: &mut FxHashSet<L::PatIdx>,
   matrix: &Matrix<L>,
   mut val: TypedPatVec<L>,
-) -> Useful<Pat<L>> {
+) -> Result<Useful<Pat<L>>> {
   if let Some(nc) = matrix.num_cols() {
     assert_eq!(nc, val.len());
   }
   if val.is_empty() {
-    return if matrix.num_rows() == 0 {
+    return Ok(if matrix.num_rows() == 0 {
       Useful::yes()
     } else {
       Useful::no()
-    };
+    });
   }
   let (pat, ty) = val.pop().unwrap();
   let mut ret = Useful::no();
@@ -79,7 +80,7 @@ fn useful<L: Lang>(
       for pat in or_pats {
         let mut val = val.clone();
         val.push((pat, ty.clone()));
-        ret.extend(useful(lang, ac, &matrix, val.clone()));
+        ret.extend(useful(lang, ac, &matrix, val.clone())?);
         matrix.push(val.into_iter().map(|x| x.0).collect());
       }
     }
@@ -100,7 +101,7 @@ fn useful<L: Lang>(
         let new_len = new.len();
         let mut val = val.clone();
         val.extend(new);
-        let mut u = useful(lang, ac, &m, val);
+        let mut u = useful(lang, ac, &m, val)?;
         for w in u.witnesses.iter_mut() {
           let args: Vec<_> = w.drain(w.len() - new_len..).rev().collect();
           w.push(Pat::con_(con.clone(), args, idx));
@@ -114,7 +115,7 @@ fn useful<L: Lang>(
       ac.remove(&idx);
     }
   }
-  ret
+  Ok(ret)
 }
 
 /// Specializes a constructor pat.
