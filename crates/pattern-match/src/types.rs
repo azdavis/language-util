@@ -17,6 +17,8 @@ impl fmt::Display for CheckError {
   }
 }
 
+impl std::error::Error for CheckError {}
+
 /// The result of checking.
 pub struct Check<L: Lang> {
   /// The indices of unreachable patterns.
