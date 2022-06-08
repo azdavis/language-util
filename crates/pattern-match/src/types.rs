@@ -46,6 +46,8 @@ pub trait Lang {
   type Ty: Debug + Clone;
 
   /// Returns a constructor for 'anything', like a wildcard or variable pattern.
+  ///
+  /// An `any` pattern should have no arguments.
   fn any(&self) -> Self::Con;
 
   /// Splits a constructor with the given type into 'real' constructors.
