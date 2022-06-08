@@ -51,12 +51,14 @@ impl<P> Useful<P> {
   }
 }
 
+type TypedPatVec<L> = Vec<(Pat<L>, <L as Lang>::Ty)>;
+
 /// Returns whether the pattern stack is useful for this matrix.
 fn useful<L: Lang>(
   lang: &L,
   ac: &mut FxHashSet<L::PatIdx>,
   matrix: &Matrix<L>,
-  mut val: Vec<(Pat<L>, L::Ty)>,
+  mut val: TypedPatVec<L>,
 ) -> Useful<Pat<L>> {
   if let Some(nc) = matrix.num_cols() {
     assert_eq!(nc, val.len());
@@ -128,7 +130,7 @@ fn specialize<L: Lang>(
   pat_con: &L::Con,
   pat_args: &[Pat<L>],
   val_con: &L::Con,
-) -> Option<Vec<(Pat<L>, L::Ty)>> {
+) -> Option<TypedPatVec<L>> {
   let ret: Vec<_> = if *pat_con == lang.any() {
     assert!(pat_args.is_empty());
     let tys = lang.get_arg_tys(ty, val_con);
