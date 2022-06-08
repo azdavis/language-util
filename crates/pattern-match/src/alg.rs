@@ -1,7 +1,7 @@
 //! The main algorithm.
 
-use super::matrix::Matrix;
-use super::types::{Check, Lang, Pat, RawPat};
+use crate::matrix::Matrix;
+use crate::types::{Check, Lang, Pat, RawPat};
 use rustc_hash::FxHashSet;
 
 /// Does the check.
