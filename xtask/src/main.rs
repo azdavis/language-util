@@ -5,9 +5,8 @@
 use anyhow::{bail, Result};
 use pico_args::Arguments;
 use std::path::Path;
-use xshell::{cmd, pushd};
+use xshell::{cmd, Shell};
 
-#[inline]
 fn show_help() {
   print!("{}", include_str!("help.txt"));
 }
@@ -20,7 +19,7 @@ fn finish_args(args: Arguments) -> Result<()> {
   Ok(())
 }
 
-fn run() -> Result<()> {
+fn main() -> Result<()> {
   let mut args = Arguments::from_env();
   if args.contains(["-h", "--help"]) {
     show_help();
@@ -33,26 +32,17 @@ fn run() -> Result<()> {
       return Ok(());
     }
   };
-  let _d = pushd(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap())?;
+  let sh = Shell::new()?;
+  let _d = sh.push_dir(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap());
   match subcommand.as_str() {
     "ci" => {
       finish_args(args)?;
-      cmd!("cargo test --no-run").run()?;
-      cmd!("cargo fmt -- --check").run()?;
-      cmd!("cargo clippy").run()?;
-      cmd!("cargo test").run()?;
+      cmd!(sh, "cargo test --no-run").run()?;
+      cmd!(sh, "cargo fmt -- --check").run()?;
+      cmd!(sh, "cargo clippy").run()?;
+      cmd!(sh, "cargo test").run()?;
     }
     s => bail!("unknown subcommand: {}", s),
   }
   Ok(())
-}
-
-fn main() {
-  match run() {
-    Ok(()) => {}
-    Err(e) => {
-      eprintln!("{}", e);
-      std::process::exit(1);
-    }
-  }
 }
