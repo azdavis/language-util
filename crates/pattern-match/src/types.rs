@@ -42,7 +42,7 @@ pub trait Lang {
   type PatIdx: Debug + Copy + Eq + Hash;
 
   /// A constructor.
-  type Con: Debug + Clone + Eq;
+  type Con: Debug + Clone;
 
   /// A type.
   type Ty: Debug + Clone;
@@ -72,6 +72,9 @@ pub trait Lang {
     ty: &Self::Ty,
     con: &Self::Con,
   ) -> Result<Vec<Self::Ty>>;
+
+  /// Returns whether `lhs` covers `rhs`. Sometimes this is as simple as returning `lhs == rhs`.
+  fn covers(&self, lhs: &Self::Con, rhs: &Self::Con) -> bool;
 }
 
 /// A pattern.

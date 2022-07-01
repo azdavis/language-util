@@ -141,7 +141,7 @@ fn specialize<L: Lang>(
   pat_args: &[Pat<L>],
   val_con: &L::Con,
 ) -> Result<Option<TypedPatVec<L>>> {
-  let ret: Vec<_> = if *pat_con == lang.any() {
+  let ret: Vec<_> = if lang.covers(pat_con, &lang.any()) {
     if !pat_args.is_empty() {
       return Err(CheckError);
     }
@@ -151,12 +151,20 @@ fn specialize<L: Lang>(
       .map(|t| (Pat::any_no_idx(lang), t))
       .rev()
       .collect()
-  } else if val_con == pat_con {
+  } else if lang.covers(pat_con, val_con) {
     let tys = lang.get_arg_tys(ty, val_con)?;
-    if tys.len() != pat_args.len() {
+    if tys.len() < pat_args.len() {
       return Err(CheckError);
     }
-    pat_args.iter().cloned().zip(tys).rev().collect()
+    // the `>` case can happen in the case of e.g. record patterns with missing labels.
+    let mut ret: Vec<_> = pat_args
+      .iter()
+      .cloned()
+      .chain(std::iter::repeat(Pat::any_no_idx(lang)))
+      .zip(tys)
+      .collect();
+    ret.reverse();
+    ret
   } else {
     return Ok(None);
   };
