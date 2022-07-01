@@ -36,7 +36,7 @@ pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
       }
 
       fn cast(node: SyntaxNode) -> Option<Self> {
-        (node.kind() == SK::#name).then(|| Self(node))
+        (node.kind() == SK::#name).then_some(Self(node))
       }
 
       fn syntax(&self) -> &SyntaxNode {
