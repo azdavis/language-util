@@ -72,14 +72,16 @@ fn useful<L: Lang>(
   if let Some(nc) = matrix.num_cols() {
     assert_eq!(nc, val.len());
   }
-  if val.is_empty() {
-    return Ok(if matrix.num_rows() == 0 {
-      Useful::yes()
-    } else {
-      Useful::no()
-    });
-  }
-  let (pat, ty) = val.pop().unwrap();
+  let (pat, ty) = match val.pop() {
+    Some(x) => x,
+    None => {
+      return Ok(if matrix.num_rows() == 0 {
+        Useful::yes()
+      } else {
+        Useful::no()
+      });
+    }
+  };
   let mut ret = Useful::no();
   let idx = pat.idx;
   match pat.raw {
