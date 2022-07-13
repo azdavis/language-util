@@ -5,8 +5,8 @@ fn check(s: &str, tests: &[(u32, u32, u32)]) {
   for &(idx, line, character) in tests {
     let text_size = TextSize::from(idx);
     let pos = Position { line, character };
-    assert_eq!(lines.position(text_size), pos);
-    assert_eq!(lines.text_size(pos), text_size);
+    assert_eq!(lines.position(text_size).unwrap(), pos);
+    assert_eq!(lines.text_size(pos).unwrap(), text_size);
   }
 }
 
