@@ -34,18 +34,27 @@ pub(crate) fn unwrap_token(rule: &Rule) -> Token {
 }
 
 pub(crate) fn write_rust_file(name: &str, contents: &str) -> Result<()> {
-  let mut prog = Command::new("rustfmt")
+  let prog = Command::new("rustfmt")
     .stdin(Stdio::piped())
     .stdout(Stdio::piped())
-    .spawn()?;
-  let mut stdout = prog.stdout.take().unwrap();
-  let mut out_file = OpenOptions::new()
-    .write(true)
-    .create(true)
-    .truncate(true)
-    .open(name)?;
-  prog.stdin.take().unwrap().write_all(contents.as_bytes())?;
-  std::io::copy(&mut stdout, &mut out_file)?;
-  assert!(prog.wait()?.success());
+    .spawn();
+  match prog {
+    Ok(mut prog) => {
+      let mut stdout = prog.stdout.take().unwrap();
+      let mut out_file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(name)?;
+      prog.stdin.take().unwrap().write_all(contents.as_bytes())?;
+      std::io::copy(&mut stdout, &mut out_file)?;
+      assert!(prog.wait()?.success());
+    }
+    Err(_) => {
+      // ignore. probably, rustfmt isn't available. just write the file
+      // unformatted.
+      std::fs::write(name, contents)?;
+    }
+  }
   Ok(())
 }
