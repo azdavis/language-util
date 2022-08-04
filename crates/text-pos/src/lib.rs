@@ -57,10 +57,10 @@ impl PositionDb {
     let line = self.lines.iter().position(|line| text_size <= line.end)?;
     let text_size = match line.checked_sub(1) {
       None => text_size,
-      Some(prev) => text_size - self.start(prev),
+      Some(prev) => text_size - self.start(prev)?,
     };
     let mut character = u32::from(text_size);
-    for &(idx, diff) in self.lines[line].non_ascii.iter() {
+    for &(idx, diff) in self.lines.get(line)?.non_ascii.iter() {
       if idx < text_size {
         character -= diff;
       } else {
@@ -80,9 +80,10 @@ impl PositionDb {
     let line: usize = pos.line.try_into().ok()?;
     let start = line
       .checked_sub(1)
-      .map_or(TextSize::from(0), |line| self.start(line));
+      .and_then(|line| self.start(line))
+      .unwrap_or_else(|| TextSize::from(0));
     let mut col = pos.character;
-    for &(idx, diff) in self.lines[line].non_ascii.iter() {
+    for &(idx, diff) in self.lines.get(line)?.non_ascii.iter() {
       if u32::from(idx) < col {
         col += diff;
       } else {
@@ -112,9 +113,9 @@ impl PositionDb {
     ))
   }
 
-  fn start(&self, line: usize) -> TextSize {
+  fn start(&self, line: usize) -> Option<TextSize> {
     // 1 for the newline
-    self.lines[line].end + TextSize::from(1)
+    Some(self.lines.get(line)?.end + TextSize::from(1))
   }
 }
 
