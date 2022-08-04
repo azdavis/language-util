@@ -17,10 +17,7 @@
 //   having two lists which ought to be the same length, have a single list of
 //   structs with two fields.
 
-#![deny(missing_debug_implementations)]
-#![deny(missing_docs)]
-#![deny(rust_2018_idioms)]
-#![deny(unsafe_code)]
+#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 use rustc_hash::FxHashSet;
 use std::hash::Hash;

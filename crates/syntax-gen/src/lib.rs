@@ -2,9 +2,7 @@
 //!
 //! [1]: https://github.com/rust-analyzer/ungrammar
 
-#![deny(missing_debug_implementations)]
-#![deny(missing_docs)]
-#![deny(rust_2018_idioms)]
+#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 mod alt;
 mod seq;

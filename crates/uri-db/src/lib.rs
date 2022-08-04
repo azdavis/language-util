@@ -3,9 +3,7 @@
 //! This depends on the `url` crate, but we call them "URIs". Basically, we're
 //! just following what `lsp-types` calls them.
 
-#![deny(missing_debug_implementations)]
-#![deny(missing_docs)]
-#![deny(rust_2018_idioms)]
+#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 pub use url::Url as Uri;
 

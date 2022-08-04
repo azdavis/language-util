@@ -1,9 +1,11 @@
 //! A macro for unwrapping options.
 
-#![deny(missing_debug_implementations)]
-#![deny(missing_docs)]
-#![deny(rust_2018_idioms)]
-#![deny(rustdoc::missing_doc_code_examples)]
+#![deny(
+  missing_debug_implementations,
+  missing_docs,
+  rust_2018_idioms,
+  rustdoc::missing_doc_code_examples
+)]
 #![no_std]
 
 /// Given `opt` and `or`, this evaluates to `x` if `opt` is `Some(x)`, and `or`
