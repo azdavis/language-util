@@ -227,8 +227,6 @@ where
     pub type SyntaxElement = rowan::SyntaxElement<#lang>;
   };
   let ast = quote! {
-    #![doc = "Abstract syntax trees."]
-
     use crate::kind::{SyntaxKind as SK, SyntaxNode, SyntaxToken, #lang};
     pub use rowan::ast::{AstNode, AstPtr};
 
