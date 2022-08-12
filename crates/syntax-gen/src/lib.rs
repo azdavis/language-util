@@ -148,6 +148,16 @@ where
       let desc = tok.desc.as_ref()?;
       Some(quote! { Self::#kind => #desc })
     }));
+  let doc_arms = punctuation
+    .iter()
+    .chain(keywords.iter())
+    .map(|(_, tok)| tok)
+    .chain(special.iter())
+    .filter_map(|tok| {
+      let doc = tok.doc.as_ref()?;
+      let kind = tok.name_ident();
+      Some(quote! { Self::#kind => #doc })
+    });
   let self_trivia = trivia.iter().map(|id| {
     quote! { Self::#id }
   });
@@ -190,6 +200,14 @@ where
       pub fn token_desc(&self) -> Option<&'static str> {
         let ret = match *self {
           #(#desc_arms ,)*
+          _ => return None,
+        };
+        Some(ret)
+      }
+
+      pub fn token_doc(&self) -> Option<&'static str> {
+        let ret = match *self {
+          #(#doc_arms ,)*
           _ => return None,
         };
         Some(ret)

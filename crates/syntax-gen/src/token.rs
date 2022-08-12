@@ -25,6 +25,8 @@ pub struct Token {
   pub name: String,
   /// Optional short description.
   pub desc: Option<String>,
+  /// Optional long documentation.
+  pub doc: Option<String>,
 }
 
 impl Token {
