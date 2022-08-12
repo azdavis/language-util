@@ -33,7 +33,10 @@ pub(crate) fn unwrap_token(rule: &Rule) -> Token {
   }
 }
 
-pub(crate) fn write_rust_file(name: &str, contents: &str) -> Result<()> {
+pub(crate) fn write_rust_file(
+  name: &std::path::Path,
+  contents: &str,
+) -> Result<()> {
   let prog = Command::new("rustfmt")
     .stdin(Stdio::piped())
     .stdout(Stdio::piped())

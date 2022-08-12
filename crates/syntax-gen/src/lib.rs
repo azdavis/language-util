@@ -19,7 +19,7 @@ use std::cmp::Reverse;
 use ungrammar::{Grammar, Rule};
 
 /// Generates Rust code from the `grammar` of the `lang` and writes it to
-/// `src/kind.rs` and `src/ast.rs`.
+/// `OUT_DIR/kind.rs` and `OUT_DIR/ast.rs`.
 ///
 /// `lang` is the name of the language, `trivia` is a list of all the
 /// `SyntaxKind`s which should be made as trivia, and `grammar` is the grammar
@@ -48,6 +48,7 @@ use ungrammar::{Grammar, Rule};
 /// properties about `grammar` do not hold. (Read the source/panic messages to
 /// find out what they are.)
 pub fn gen<F>(
+  out_dir: &std::path::Path,
   lang: &str,
   trivia: &[&str],
   grammar: Grammar,
@@ -269,7 +270,13 @@ where
 
     #(#types)*
   };
-  util::write_rust_file("src/kind.rs", kind.to_string().as_ref())?;
-  util::write_rust_file("src/ast.rs", ast.to_string().as_ref())?;
+  util::write_rust_file(
+    out_dir.join("kind.rs").as_path(),
+    kind.to_string().as_str(),
+  )?;
+  util::write_rust_file(
+    out_dir.join("ast.rs").as_path(),
+    ast.to_string().as_str(),
+  )?;
   Ok(())
 }
