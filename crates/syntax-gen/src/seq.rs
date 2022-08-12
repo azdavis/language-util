@@ -102,7 +102,7 @@ fn field<'cx>(
       }
       Rule::Labeled { label: l, rule: r } => {
         if let Some(old) = label {
-          panic!("already have label {}, cannot have new label {}", old, l);
+          panic!("already have label {old}, cannot have new label {l}");
         }
         label = Some(l.as_str());
         rule = r.as_ref();
@@ -117,7 +117,7 @@ fn field<'cx>(
         modifier = Modifier::Repeated;
         rule = r.as_ref();
       }
-      Rule::Seq(_) | Rule::Alt(_) => panic!("bad field rule: {:?}", rule),
+      Rule::Seq(_) | Rule::Alt(_) => panic!("bad field rule: {rule:?}"),
     }
   }
   let field_name = match label {
@@ -125,7 +125,7 @@ fn field<'cx>(
     None => {
       let to_snake = pascal_to_snake(name);
       match modifier {
-        Modifier::Repeated => format_ident!("{}s", to_snake),
+        Modifier::Repeated => format_ident!("{to_snake}s"),
         Modifier::Optional | Modifier::Regular => ident(&to_snake),
       }
     }

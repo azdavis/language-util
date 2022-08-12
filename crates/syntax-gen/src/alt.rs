@@ -16,7 +16,7 @@ pub(crate) fn get(
       token_alts.insert(name.clone());
       get_tokens(cx, name, rules)
     }
-    bad => panic!("bad alt rule {:?}", bad),
+    bad => panic!("bad alt rule {bad:?}"),
   }
 }
 

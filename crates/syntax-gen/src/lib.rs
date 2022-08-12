@@ -135,7 +135,7 @@ where
     .iter()
     .chain(keywords.iter())
     .map(|&(name, ref kind)| {
-      let name = format!("`{}`", name);
+      let name = format!("`{name}`");
       quote! { Self::#kind => #name }
     })
     .chain(special.iter().map(|&(ref name, desc)| {

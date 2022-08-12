@@ -38,6 +38,6 @@ pub fn get_opt(c: char) -> Option<&'static str> {
 pub fn get(c: char) -> &'static str {
   match get_opt(c) {
     Some(s) => s,
-    None => panic!("don't know the name for {}", c),
+    None => panic!("don't know the name for {c}"),
   }
 }
