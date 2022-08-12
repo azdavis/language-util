@@ -9,14 +9,15 @@ mod seq;
 mod token;
 mod util;
 
-pub use token::TokenKind;
-
-use crate::util::{ident, Cx};
+use crate::util::Cx;
 use proc_macro2::Literal;
 use quote::quote;
 use rustc_hash::FxHashSet;
 use std::cmp::Reverse;
+use token::ident;
 use ungrammar::{Grammar, Rule};
+
+pub use token::{Token, TokenKind};
 
 /// Generates Rust code from the `grammar` of the `lang` and writes it to
 /// `OUT_DIR/kind.rs` and `OUT_DIR/ast.rs`.
@@ -55,7 +56,7 @@ pub fn gen<F>(
   get_token: F,
 ) -> std::io::Result<()>
 where
-  F: Fn(&str) -> (TokenKind, String),
+  F: Fn(&str) -> (TokenKind, Token),
 {
   let lang = ident(lang);
   let tokens = token::TokenDb::new(&grammar, get_token);
@@ -103,44 +104,49 @@ where
     let mut xs: Vec<_> = tokens
       .keywords
       .into_iter()
-      .map(|(tok, s)| (grammar[tok].name.as_str(), ident(&s)))
+      .map(|(ug_tok, tok)| (grammar[ug_tok].name.as_str(), tok))
       .collect();
     xs.sort_unstable_by_key(|&(name, _)| (Reverse(name.len()), name));
     xs
   };
-  let keyword_arms = keywords.iter().map(|(name, kind)| {
+  let keyword_arms = keywords.iter().map(|(name, tok)| {
     let bs = Literal::byte_string(name.as_bytes());
+    let kind = tok.name_ident();
     quote! { #bs => Self::#kind }
   });
   let punctuation = {
     let mut xs: Vec<_> = tokens
       .punctuation
       .into_iter()
-      .map(|(tok, s)| (grammar[tok].name.as_str(), ident(&s)))
+      .map(|(ug_tok, tok)| (grammar[ug_tok].name.as_str(), tok))
       .collect();
     xs.sort_unstable_by_key(|&(name, _)| (Reverse(name.len()), name));
     xs
   };
   let punctuation_len = punctuation.len();
-  let punctuation_elements = punctuation.iter().map(|(name, kind)| {
+  let punctuation_elements = punctuation.iter().map(|(name, tok)| {
     let bs = Literal::byte_string(name.as_bytes());
+    let kind = tok.name_ident();
     quote! { (#bs, Self::#kind) }
   });
   let special = {
-    let mut xs: Vec<_> = tokens.special.into_iter().map(|x| x.1).collect();
+    let mut xs: Vec<_> =
+      tokens.special.into_iter().map(|(_, tok)| tok).collect();
     xs.sort_unstable();
     xs
   };
   let desc_arms = punctuation
     .iter()
     .chain(keywords.iter())
-    .map(|&(name, ref kind)| {
-      let name = format!("`{name}`");
-      quote! { Self::#kind => #name }
-    })
-    .chain(special.iter().map(|&(ref name, desc)| {
-      let kind = util::ident(name);
+    .map(|(name, tok)| {
+      let desc = tok.desc.clone().unwrap_or_else(|| format!("`{name}`"));
+      let kind = tok.name_ident();
       quote! { Self::#kind => #desc }
+    })
+    .chain(special.iter().filter_map(|tok| {
+      let kind = tok.name_ident();
+      let desc = tok.desc.as_ref()?;
+      Some(quote! { Self::#kind => #desc })
     }));
   let self_trivia = trivia.iter().map(|id| {
     quote! { Self::#id }
@@ -148,9 +154,14 @@ where
   // the order is intentional
   let syntax_kinds: Vec<_> = trivia
     .iter()
-    .chain(keywords.iter().chain(punctuation.iter()).map(|(_, id)| id))
     .cloned()
-    .chain(special.iter().map(|(name, _)| util::ident(name)))
+    .chain(
+      keywords
+        .iter()
+        .chain(punctuation.iter())
+        .map(|(_, tok)| tok.name_ident()),
+    )
+    .chain(special.iter().map(|tok| tok.name_ident()))
     .chain(node_syntax_kinds)
     .collect();
   let last_syntax_kind = syntax_kinds.last().unwrap();

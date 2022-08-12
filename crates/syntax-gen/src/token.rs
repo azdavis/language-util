@@ -1,11 +1,10 @@
 use rustc_hash::FxHashMap;
-use ungrammar::{Grammar, Token};
 
 #[derive(Debug)]
 pub(crate) struct TokenDb {
-  pub(crate) punctuation: FxHashMap<Token, String>,
-  pub(crate) keywords: FxHashMap<Token, String>,
-  pub(crate) special: FxHashMap<Token, (String, &'static str)>,
+  pub(crate) punctuation: FxHashMap<ungrammar::Token, Token>,
+  pub(crate) keywords: FxHashMap<ungrammar::Token, Token>,
+  pub(crate) special: FxHashMap<ungrammar::Token, Token>,
 }
 
 /// A token kind.
@@ -15,29 +14,44 @@ pub enum TokenKind {
   Punctuation,
   /// Keywords, i.e. they might be confused as identifiers.
   Keyword,
-  /// Special tokens, with a given description.
-  Special(&'static str),
+  /// Special tokens
+  Special,
+}
+
+/// A token.
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Token {
+  /// The name of the token.
+  pub name: String,
+  /// Optional short description.
+  pub desc: Option<String>,
+}
+
+impl Token {
+  pub(crate) fn name_ident(&self) -> proc_macro2::Ident {
+    ident(self.name.as_str())
+  }
 }
 
 impl TokenDb {
-  pub(crate) fn new<F>(grammar: &Grammar, get_token: F) -> Self
+  pub(crate) fn new<F>(grammar: &ungrammar::Grammar, get_token: F) -> Self
   where
-    F: Fn(&str) -> (TokenKind, String),
+    F: Fn(&str) -> (TokenKind, Token),
   {
     let mut punctuation = FxHashMap::default();
     let mut keywords = FxHashMap::default();
     let mut special = FxHashMap::default();
     for token in grammar.tokens() {
-      let (kind, name) = get_token(grammar[token].name.as_ref());
+      let (kind, tok) = get_token(grammar[token].name.as_ref());
       match kind {
         TokenKind::Punctuation => {
-          assert!(punctuation.insert(token, name).is_none());
+          assert!(punctuation.insert(token, tok).is_none())
         }
         TokenKind::Keyword => {
-          assert!(keywords.insert(token, name).is_none());
+          assert!(keywords.insert(token, tok).is_none())
         }
-        TokenKind::Special(desc) => {
-          assert!(special.insert(token, (name, desc)).is_none());
+        TokenKind::Special => {
+          assert!(special.insert(token, tok).is_none())
         }
       }
     }
@@ -48,15 +62,15 @@ impl TokenDb {
     }
   }
 
-  pub(crate) fn name(&self, token: Token) -> &str {
-    if let Some(x) = self.punctuation.get(&token) {
-      x.as_str()
-    } else if let Some(x) = self.keywords.get(&token) {
-      x.as_str()
-    } else if let Some(&(ref x, _)) = self.special.get(&token) {
-      x.as_str()
-    } else {
-      panic!("{:?} does not have a name", token)
-    }
+  pub(crate) fn get(&self, token: ungrammar::Token) -> &Token {
+    None
+      .or_else(|| self.punctuation.get(&token))
+      .or_else(|| self.keywords.get(&token))
+      .or_else(|| self.special.get(&token))
+      .unwrap_or_else(|| panic!("{token:?} does not have a name"))
   }
+}
+
+pub(crate) fn ident(s: &str) -> proc_macro2::Ident {
+  quote::format_ident!("{}", s)
 }

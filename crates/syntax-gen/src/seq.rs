@@ -1,4 +1,5 @@
-use crate::util::{ident, Cx};
+use crate::token::ident;
+use crate::util::Cx;
 use identifier_case::pascal_to_snake;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
@@ -94,7 +95,7 @@ fn field<'cx>(
         break;
       }
       Rule::Token(tok) => {
-        name = cx.tokens.name(*tok);
+        name = cx.tokens.get(*tok).name.as_str();
         base_ty = ident("SyntaxToken");
         let name_ident = ident(name);
         base_body = quote! { tokens(self, SK::#name_ident) };

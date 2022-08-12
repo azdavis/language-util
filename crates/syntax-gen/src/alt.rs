@@ -1,4 +1,5 @@
-use crate::util::{ident, unwrap_node, unwrap_token, Cx};
+use crate::token::ident;
+use crate::util::{unwrap_node, unwrap_token, Cx};
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 use rustc_hash::FxHashSet;
@@ -68,7 +69,7 @@ fn get_tokens(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
   let mut to_strs = Vec::with_capacity(rules.len());
   for rule in rules {
     let tok = unwrap_token(rule);
-    let name = ident(cx.tokens.name(tok));
+    let name = cx.tokens.get(tok).name_ident();
     let text = cx.grammar[tok].name.as_str();
     defs.push(quote! { #name });
     casts.push(quote! { SK::#name => #name_kind::#name });

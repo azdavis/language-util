@@ -1,6 +1,5 @@
 use crate::token::TokenDb;
 use proc_macro2::Ident;
-use quote::format_ident;
 use rustc_hash::FxHashSet;
 use std::fs::OpenOptions;
 use std::io::{Result, Write as _};
@@ -13,10 +12,6 @@ pub(crate) struct Cx {
   pub(crate) grammar: Grammar,
   pub(crate) tokens: TokenDb,
   pub(crate) token_alts: FxHashSet<Ident>,
-}
-
-pub(crate) fn ident(s: &str) -> Ident {
-  format_ident!("{}", s)
 }
 
 pub(crate) fn unwrap_node(rule: &Rule) -> Node {
