@@ -1,6 +1,6 @@
 //! A [`Sink`] for Rowan trees.
 
-use crate::{Expected, Sink};
+use crate::Sink;
 use rowan::{
   GreenNodeBuilder, Language, SyntaxKind, SyntaxNode, TextRange, TextSize,
 };
@@ -8,16 +8,16 @@ use token::{Token, Triviable};
 
 /// The sink, which wraps a Rowan `GreenNodeBuilder`.
 #[derive(Debug)]
-pub struct RowanSink<K> {
+pub struct RowanSink<E> {
   builder: GreenNodeBuilder<'static>,
   range: TextRange,
-  errors: Vec<Error<K>>,
-  expected: Vec<Expected<K>>,
+  errors: Vec<Error<E>>,
+  no_range: Vec<E>,
 }
 
-impl<K> RowanSink<K> {
+impl<E> RowanSink<E> {
   /// Finish the builder.
-  pub fn finish<L>(mut self) -> (SyntaxNode<L>, Vec<Error<K>>)
+  pub fn finish<L>(mut self) -> (SyntaxNode<L>, Vec<Error<E>>)
   where
     L: Language,
   {
@@ -28,28 +28,28 @@ impl<K> RowanSink<K> {
 
   fn extend_errors(&mut self) {
     let errors =
-      std::mem::take(&mut self.expected)
+      std::mem::take(&mut self.no_range)
         .into_iter()
-        .map(|expected| Error {
+        .map(|kind| Error {
           range: self.range,
-          expected,
+          kind,
         });
     self.errors.extend(errors);
   }
 }
 
-impl<K> Default for RowanSink<K> {
+impl<E> Default for RowanSink<E> {
   fn default() -> Self {
     Self {
       builder: GreenNodeBuilder::default(),
       range: TextRange::empty(0.into()),
       errors: Vec::new(),
-      expected: Vec::new(),
+      no_range: Vec::new(),
     }
   }
 }
 
-impl<K> Sink<K> for RowanSink<K>
+impl<K, E> Sink<K, E> for RowanSink<E>
 where
   K: Into<SyntaxKind> + Triviable,
 {
@@ -72,16 +72,16 @@ where
     self.builder.finish_node();
   }
 
-  fn error(&mut self, expected: Expected<K>) {
-    self.expected.push(expected);
+  fn error(&mut self, error: E) {
+    self.no_range.push(error)
   }
 }
 
-/// A parse error.
+/// An error.
 #[derive(Debug)]
-pub struct Error<K> {
-  /// The range of the error.
+pub struct Error<E> {
+  /// The range.
   pub range: TextRange,
-  /// The thing that was expected.
-  pub expected: Expected<K>,
+  /// The kind.
+  pub kind: E,
 }

@@ -9,7 +9,7 @@
 //!    - [`Eq`]
 //!    - [`Triviable`]
 //!    - [`fmt::Display`]
-//! 3. Define a lexer which transforms an input string into a vector of
+//! 3. Define a lexer which transforms an a string into a vector of
 //!    contiguous [`Token`]s using this `SyntaxKind`.
 //! 4. Define your language's grammar with functions operating on a [`Parser`].
 //! 5. Call [`Parser::finish`] when done, and feed it a suitable [`Sink`] for
@@ -30,15 +30,15 @@ use token::{Token, Triviable};
 
 /// A event-based parser.
 #[derive(Debug)]
-pub struct Parser<'input, K> {
-  tokens: &'input [Token<'input, K>],
+pub struct Parser<'a, K, E> {
+  tokens: &'a [Token<'a, K>],
   tok_idx: usize,
-  events: Vec<Option<Event<K>>>,
+  events: Vec<Option<Event<K, E>>>,
 }
 
-impl<'input, K> Parser<'input, K> {
+impl<'a, K, E> Parser<'a, K, E> {
   /// Returns a new parser for the given tokens.
-  pub fn new(tokens: &'input [Token<'input, K>]) -> Self {
+  pub fn new(tokens: &'a [Token<'a, K>]) -> Self {
     Self {
       tokens,
       tok_idx: 0,
@@ -115,9 +115,56 @@ impl<'input, K> Parser<'input, K> {
     }
     ret
   }
+
+  /// Save the state of the parser.
+  ///
+  /// Use it with `ok_since` to implement unbounded backtracking.
+  ///
+  /// For any `Entered` or `Exited` that were created before the save, do not
+  /// `exit` or `precede` them respectively between the save and the `ok_since`.
+  /// Or do anything else that modifies any events before the save. Otherwise
+  /// the parser won't fully recover to its original state before the save, and
+  /// weird things will probably happen.
+  ///
+  /// It's intended to be used like this:
+  ///
+  /// ```ignore
+  /// let save = p.save();
+  /// // maybe make some new `Entered` and `Exited`
+  /// // maybe eat some tokens
+  /// // maybe encounter some errors
+  /// foo(p);
+  /// if p.ok_since(save) {
+  ///   // foo parsed without errors
+  /// } else {
+  ///   // foo had errors, so it failed to parse.
+  ///   // the parser is reset to the state at the save
+  /// }
+  /// ```
+  pub fn save(&self) -> Save {
+    Save {
+      tok_idx: self.tok_idx,
+      events_len: self.events.len(),
+    }
+  }
+
+  /// Returns whether there were _no_ errors since the save, i.e. whether we did
+  /// _not_ restore to that save.
+  pub fn ok_since(&mut self, save: Save) -> bool {
+    let error_since = self
+      .events
+      .iter()
+      .skip(save.events_len)
+      .any(|ev| matches!(*ev, Some(Event::Error(..))));
+    if error_since {
+      self.tok_idx = save.tok_idx;
+      self.events.truncate(save.events_len);
+    }
+    !error_since
+  }
 }
 
-impl<'input, K> Parser<'input, K>
+impl<'a, K, E> Parser<'a, K, E>
 where
   K: Copy + Triviable,
 {
@@ -125,7 +172,7 @@ where
   /// out of tokens.
   ///
   /// Equivalent to `self.peek_n(0)`. See [`Parser::peek_n`].
-  pub fn peek(&mut self) -> Option<Token<'input, K>> {
+  pub fn peek(&mut self) -> Option<Token<'a, K>> {
     while let Some(&tok) = self.tokens.get(self.tok_idx) {
       if tok.kind.is_trivia() {
         self.tok_idx += 1;
@@ -142,7 +189,7 @@ where
   /// The current token is the first token not yet consumed for which
   /// [`Triviable::is_trivia`] returns `true`; thus, if this returns
   /// `Some(tok)`, then `tok.kind.is_trivia()` is `false`.
-  pub fn peek_n(&mut self, n: usize) -> Option<Token<'input, K>> {
+  pub fn peek_n(&mut self, n: usize) -> Option<Token<'a, K>> {
     let mut ret = self.peek();
     let old_tok_idx = self.tok_idx;
     for _ in 0..n {
@@ -160,24 +207,19 @@ where
   ///
   /// This is often used after calling [`Parser::at`] to verify some expected
   /// token was present.
-  pub fn bump(&mut self) -> Token<'input, K> {
+  pub fn bump(&mut self) -> Token<'a, K> {
     let ret = self.peek().expect("bump with no tokens");
     self.events.push(Some(Event::Token));
     self.tok_idx += 1;
     ret
   }
 
-  /// Records an error at the current token, with an "expected `desc`" error
-  /// message.
-  pub fn error(&mut self, desc: &'static str) {
-    self.error_(Expected::Custom(desc))
+  /// Records an error at the current token.
+  pub fn error(&mut self, error: E) {
+    self.events.push(Some(Event::Error(error)))
   }
 
-  fn error_(&mut self, expected: Expected<K>) {
-    self.events.push(Some(Event::Error(expected)));
-  }
-
-  fn eat_trivia(&mut self, sink: &mut dyn Sink<K>) {
+  fn eat_trivia(&mut self, sink: &mut dyn Sink<K, E>) {
     while let Some(&tok) = self.tokens.get(self.tok_idx) {
       if !tok.kind.is_trivia() {
         break;
@@ -188,7 +230,7 @@ where
   }
 
   /// Finishes parsing, and writes the parsed tree into the `sink`.
-  pub fn finish(mut self, sink: &mut dyn Sink<K>) {
+  pub fn finish(mut self, sink: &mut dyn Sink<K, E>) {
     self.tok_idx = 0;
     let mut kinds = Vec::new();
     let mut levels: usize = 0;
@@ -241,9 +283,10 @@ where
   }
 }
 
-impl<'input, K> Parser<'input, K>
+impl<'a, K, E> Parser<'a, K, E>
 where
   K: Copy + Triviable + Eq,
+  E: Expected<K>,
 {
   /// Returns whether the current token has the given `kind`.
   pub fn at(&mut self, kind: K) -> bool {
@@ -257,11 +300,11 @@ where
 
   /// If the current token's kind is `kind`, then this consumes it, else this
   /// errors. Returns the token if it was eaten.
-  pub fn eat(&mut self, kind: K) -> Option<Token<'input, K>> {
+  pub fn eat(&mut self, kind: K) -> Option<Token<'a, K>> {
     if self.at(kind) {
       Some(self.bump())
     } else {
-      self.error_(Expected::Kind(kind));
+      self.error(E::expected(kind));
       None
     }
   }
@@ -305,8 +348,21 @@ impl Exited {
   }
 }
 
+/// A save of the parser's state.
+#[derive(Debug)]
+pub struct Save {
+  tok_idx: usize,
+  events_len: usize,
+}
+
+/// An error that can be generated from an expected syntax kind.
+pub trait Expected<K> {
+  /// Generate the error.
+  fn expected(kind: K) -> Self;
+}
+
 /// Types which can construct a syntax tree.
-pub trait Sink<K> {
+pub trait Sink<K, E> {
   /// Enters a syntax construct with the given kind.
   fn enter(&mut self, kind: K);
   /// Adds a token to the given syntax construct.
@@ -314,39 +370,17 @@ pub trait Sink<K> {
   /// Exits a syntax construct.
   fn exit(&mut self);
   /// Reports an error.
-  fn error(&mut self, expected: Expected<K>);
+  fn error(&mut self, error: E);
 }
 
-/// Something expected.
-#[derive(Debug)]
-pub enum Expected<K> {
-  /// A kind.
-  Kind(K),
-  /// A custom description.
-  Custom(&'static str),
-}
-
-impl<K> fmt::Display for Expected<K>
-where
-  K: fmt::Display,
-{
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.write_str("expected ")?;
-    match self {
-      Expected::Kind(k) => k.fmt(f),
-      Expected::Custom(d) => f.write_str(d),
-    }
-  }
-}
-
-enum Event<K> {
+enum Event<K, E> {
   Enter(K, Option<usize>),
   Token,
   Exit,
-  Error(Expected<K>),
+  Error(E),
 }
 
-impl<K> fmt::Debug for Event<K> {
+impl<K, E> fmt::Debug for Event<K, E> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Event::Enter(_, n) => f.debug_tuple("Enter").field(n).finish(),
@@ -359,7 +393,7 @@ impl<K> fmt::Debug for Event<K> {
 
 #[test]
 fn event_size() {
-  let ev = std::mem::size_of::<Event<()>>();
-  let op_ev = std::mem::size_of::<Option<Event<()>>>();
+  let ev = std::mem::size_of::<Event<(), ()>>();
+  let op_ev = std::mem::size_of::<Option<Event<(), ()>>>();
   assert_eq!(ev, op_ev)
 }
