@@ -121,6 +121,18 @@ impl PositionDb {
     ))
   }
 
+  /// Return the TextSize of the end of the original text.
+  pub fn end_text_size(&self) -> TextSize {
+    self.lines.last().expect("empty lines").end
+  }
+
+  /// Return the Position of the end of the original text.
+  pub fn end_position(&self) -> Position {
+    self
+      .position(self.end_text_size())
+      .expect("end_text_size is valid")
+  }
+
   fn start(&self, line: usize) -> Option<TextSize> {
     // 1 for the newline
     Some(self.lines.get(line)?.end + TextSize::from(1))
