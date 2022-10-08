@@ -1,12 +1,12 @@
 use crate::{Position, PositionDb, TextSize};
 
 fn check(s: &str, tests: &[(u32, u32, u32)]) {
-  let lines = PositionDb::new(s);
+  let db = PositionDb::new(s);
   for &(idx, line, character) in tests {
     let text_size = TextSize::from(idx);
     let pos = Position { line, character };
-    assert_eq!(lines.position(text_size).unwrap(), pos);
-    assert_eq!(lines.text_size(pos).unwrap(), text_size);
+    assert_eq!(db.position(text_size).unwrap(), pos);
+    assert_eq!(db.text_size(pos).unwrap(), text_size);
   }
 }
 
