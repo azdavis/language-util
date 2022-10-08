@@ -13,13 +13,13 @@ struct Line {
   end: TextSize,
   /// pairs of (where this char was in the line, the difference between the
   /// number of bytes needed to represent this char in utf8 and utf16)
-  non_ascii: Vec<(TextSize, u32)>,
+  non_ascii: Box<[(TextSize, u32)]>,
 }
 
 /// A database allowing translations between [`Position`]s and [`TextSize`]s.
 #[derive(Debug)]
 pub struct PositionDb {
-  lines: Vec<Line>,
+  lines: Box<[Line]>,
 }
 
 impl PositionDb {
@@ -37,7 +37,10 @@ impl PositionDb {
         non_ascii.push((col, diff));
       }
       if c == '\n' {
-        lines.push(Line { end, non_ascii });
+        lines.push(Line {
+          end,
+          non_ascii: non_ascii.into_boxed_slice(),
+        });
         non_ascii = Vec::new();
         col = TextSize::from(0);
       }
@@ -45,9 +48,13 @@ impl PositionDb {
       end += ts;
       col += ts;
     }
-    lines.push(Line { end, non_ascii });
-    lines.shrink_to_fit();
-    Self { lines }
+    lines.push(Line {
+      end,
+      non_ascii: non_ascii.into_boxed_slice(),
+    });
+    Self {
+      lines: lines.into_boxed_slice(),
+    }
   }
 
   /// Translates a `TextSize` into a `Position`.
