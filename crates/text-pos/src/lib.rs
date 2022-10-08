@@ -19,6 +19,7 @@ struct Line {
 /// A database allowing translations between [`Position`]s and [`TextSize`]s.
 #[derive(Debug)]
 pub struct PositionDb {
+  /// invariant: non-empty
   lines: Box<[Line]>,
 }
 
@@ -27,7 +28,7 @@ impl PositionDb {
   pub fn new(s: &str) -> Self {
     let mut end = TextSize::from(0);
     let mut col = TextSize::from(0);
-    let mut lines = Vec::new();
+    let mut lines = Vec::with_capacity(1);
     let mut non_ascii = Vec::new();
     for c in s.chars() {
       if !c.is_ascii() {
