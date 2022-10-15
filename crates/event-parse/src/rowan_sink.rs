@@ -78,7 +78,7 @@ where
 }
 
 /// An error.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Error<E> {
   /// The range.
   pub range: TextRange,
