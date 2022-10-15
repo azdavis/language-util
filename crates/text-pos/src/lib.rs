@@ -8,7 +8,7 @@ mod tests;
 use std::fmt;
 use text_size::{TextRange, TextSize};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Line {
   end: TextSize,
   /// pairs of (where this char was in the line, the difference between the
@@ -17,7 +17,7 @@ struct Line {
 }
 
 /// A database allowing translations between [`Position`]s and [`TextSize`]s.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PositionDb {
   /// invariant: non-empty
   lines: Box<[Line]>,
