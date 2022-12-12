@@ -157,16 +157,17 @@ fn specialize<L: Lang>(
   pat_args: &[Pat<L>],
   val_con: &L::Con,
 ) -> Result<Option<TypedPatVec<L>>> {
-  let ret: Vec<_> = if lang.covers(pat_con, &lang.any()) {
+  let ret = if lang.covers(pat_con, &lang.any()) {
     if !pat_args.is_empty() {
       return Err(CheckError);
     }
     let tys = lang.get_arg_tys(ty, val_con)?;
-    tys
+    let ret: Vec<_> = tys
       .into_iter()
       .map(|t| (Pat::any_no_idx(lang), t))
       .rev()
-      .collect()
+      .collect();
+    Some(ret)
   } else if lang.covers(pat_con, val_con) {
     let tys = lang.get_arg_tys(ty, val_con)?;
     if tys.len() < pat_args.len() {
@@ -180,9 +181,9 @@ fn specialize<L: Lang>(
       .zip(tys)
       .collect();
     ret.reverse();
-    ret
+    Some(ret)
   } else {
-    return Ok(None);
+    None
   };
-  Ok(Some(ret))
+  Ok(ret)
 }
