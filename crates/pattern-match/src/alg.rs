@@ -39,6 +39,20 @@ pub fn check<L: Lang>(
   })
 }
 
+/// Adds all the pat indices in the Pat to the set.
+fn get_pat_indices<L: Lang>(ac: &mut FxHashSet<L::PatIdx>, pat: &Pat<L>) {
+  if let Some(idx) = pat.idx {
+    ac.insert(idx);
+  }
+  match &pat.raw {
+    RawPat::Con(_, pats) | RawPat::Or(pats) => {
+      for pat in pats {
+        get_pat_indices(ac, pat);
+      }
+    }
+  }
+}
+
 struct Useful<P> {
   /// invariant: no Pat will be Or
   witnesses: Vec<Vec<P>>,
@@ -171,18 +185,4 @@ fn specialize<L: Lang>(
     return Ok(None);
   };
   Ok(Some(ret))
-}
-
-/// Adds all the pat indices in the Pat to the set.
-fn get_pat_indices<L: Lang>(ac: &mut FxHashSet<L::PatIdx>, pat: &Pat<L>) {
-  if let Some(idx) = pat.idx {
-    ac.insert(idx);
-  }
-  match &pat.raw {
-    RawPat::Con(_, pats) | RawPat::Or(pats) => {
-      for pat in pats {
-        get_pat_indices(ac, pat);
-      }
-    }
-  }
 }
