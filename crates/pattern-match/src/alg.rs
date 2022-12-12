@@ -19,7 +19,7 @@ pub fn check<L: Lang>(
   for pat in pats.iter() {
     get_pat_indices(&mut ac, pat);
   }
-  let mut matrix = Matrix::default();
+  let mut matrix = Matrix::<L>::default();
   for pat in pats {
     useful(lang, &mut ac, &matrix, vec![(pat.clone(), ty.clone())])?;
     matrix.push(vec![pat]);
@@ -96,7 +96,7 @@ fn useful<L: Lang>(
       });
     }
   };
-  let mut ret = Useful::no();
+  let mut ret = Useful::<Pat<L>>::no();
   let idx = pat.idx;
   match pat.raw {
     RawPat::Or(or_pats) => {
@@ -111,7 +111,7 @@ fn useful<L: Lang>(
     RawPat::Con(p_con, p_args) => {
       let last_col = matrix.non_empty_rows().map(|r| &r.con);
       for con in lang.split(&ty, &p_con, last_col)? {
-        let mut m = Matrix::default();
+        let mut m = Matrix::<L>::default();
         for row in matrix.non_empty_rows() {
           let new = specialize(lang, &ty, &row.con, &row.args, &con)?;
           if let Some(new) = new {
