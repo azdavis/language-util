@@ -1,6 +1,7 @@
 //! See [`Matrix`].
 
 use crate::types::{Lang, Pat, RawPat};
+use std::fmt;
 
 /// A 2-D matrix of [`Pat`]s.
 pub(crate) struct Matrix<L: Lang> {
@@ -19,6 +20,12 @@ impl<L: Lang> Clone for Matrix<L> {
     Self {
       rows: self.rows.clone(),
     }
+  }
+}
+
+impl<L: Lang> fmt::Debug for Matrix<L> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    f.debug_struct("Matrix").field("rows", &self.rows).finish()
   }
 }
 
@@ -84,6 +91,15 @@ impl<L: Lang> Clone for Row<L> {
   }
 }
 
+impl<L: Lang> fmt::Debug for Row<L> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Row::Empty => f.write_str("Empty"),
+      Row::NonEmpty(row) => f.debug_tuple("NonEmpty").field(&row).finish(),
+    }
+  }
+}
+
 impl<L: Lang> Row<L> {
   fn len(&self) -> usize {
     match self {
@@ -111,6 +127,16 @@ impl<L: Lang> Clone for NonEmptyRow<L> {
       con: self.con.clone(),
       args: self.args.clone(),
     }
+  }
+}
+
+impl<L: Lang> fmt::Debug for NonEmptyRow<L> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    f.debug_struct("NonEmptyRow")
+      .field("pats", &self.pats)
+      .field("con", &self.con)
+      .field("args", &self.args)
+      .finish()
   }
 }
 
