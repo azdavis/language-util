@@ -105,7 +105,7 @@ fn useful<L: Lang>(
         let mut val = val.clone();
         val.push((pat, ty.clone()));
         ret.extend(useful(lang, ac, &matrix, val.clone())?);
-        matrix.push(val.into_iter().map(|x| x.0).collect());
+        matrix.push(val.into_iter().map(|(x, _)| x).collect());
       }
     }
     RawPat::Con(p_con, p_args) => {
@@ -116,7 +116,7 @@ fn useful<L: Lang>(
           let new = specialize(lang, &ty, &row.con, &row.args, &con)?;
           if let Some(new) = new {
             let mut pats = row.pats.clone();
-            pats.extend(new.into_iter().map(|x| x.0));
+            pats.extend(new.into_iter().map(|(x, _)| x));
             m.push(pats);
           }
         }
