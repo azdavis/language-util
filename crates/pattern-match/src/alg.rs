@@ -100,12 +100,12 @@ fn useful<L: Lang>(
   let idx = pat.idx;
   match pat.raw {
     RawPat::Or(or_pats) => {
-      let mut matrix = matrix.clone();
+      let mut m = matrix.clone();
       for pat in or_pats {
         let mut val = val.clone();
         val.push((pat, ty.clone()));
-        ret.extend(useful(lang, ac, &matrix, val.clone())?);
-        matrix.push(val.into_iter().map(|(x, _)| x).collect());
+        ret.extend(useful(lang, ac, &m, val.clone())?);
+        m.push(val.into_iter().map(|(x, _)| x).collect());
       }
     }
     RawPat::Con(p_con, p_args) => {
