@@ -1,7 +1,7 @@
 //! The main algorithm.
 
 use crate::matrix::Matrix;
-use crate::types::{Check, CheckError, Lang, Pat, RawPat, Result};
+use crate::types::{Check, CheckError, ConPat, Lang, Pat, RawPat, Result};
 use rustc_hash::FxHashSet;
 
 /// Does the check.
@@ -45,7 +45,12 @@ fn get_pat_indices<L: Lang>(ac: &mut FxHashSet<L::PatIdx>, pat: &Pat<L>) {
     ac.insert(idx);
   }
   match &pat.raw {
-    RawPat::Con(_, pats) | RawPat::Or(pats) => {
+    RawPat::Con(con_pat) => {
+      for pat in &con_pat.args {
+        get_pat_indices(ac, pat);
+      }
+    }
+    RawPat::Or(pats) => {
       for pat in pats {
         get_pat_indices(ac, pat);
       }
@@ -108,19 +113,19 @@ fn useful<L: Lang>(
         m.push(val.into_iter().map(|(x, _)| x).collect());
       }
     }
-    RawPat::Con(p_con, p_args) => {
-      let last_col = matrix.non_empty_rows().map(|r| &r.con);
-      for con in lang.split(&ty, &p_con, last_col)? {
+    RawPat::Con(con_pat) => {
+      let last_col = matrix.non_empty_rows().map(|r| &r.con_pat.con);
+      for con in lang.split(&ty, &con_pat.con, last_col)? {
         let mut m = Matrix::<L>::default();
         for row in matrix.non_empty_rows() {
-          let new = specialize(lang, &ty, &row.con, &row.args, &con)?;
+          let new = specialize(lang, &ty, &row.con_pat, &con)?;
           if let Some(new) = new {
             let mut pats = row.pats.clone();
             pats.extend(new.into_iter().map(|(x, _)| x));
             m.push(pats);
           }
         }
-        let new = specialize(lang, &ty, &p_con, &p_args, &con)?
+        let new = specialize(lang, &ty, &con_pat, &con)?
           .expect("p_con must cover itself");
         let new_len = new.len();
         let mut val = val.clone();
@@ -144,21 +149,15 @@ fn useful<L: Lang>(
 
 /// Specializes a constructor pat.
 ///
-/// The pat:
-///
-/// - has type `ty`;
-/// - has been broken into its constituent constructor `pat_con` and arguments
-///   `pat_args`;
-/// - is specialized with the given other value constructor `val_con`.
+/// The pat has type `ty` and is specialized with the given other value constructor `con`.
 fn specialize<L: Lang>(
   lang: &L,
   ty: &L::Ty,
-  pat_con: &L::Con,
-  pat_args: &[Pat<L>],
+  pat: &ConPat<L>,
   val_con: &L::Con,
 ) -> Result<Option<TypedPatVec<L>>> {
-  let ret = if lang.covers(pat_con, &lang.any()) {
-    if !pat_args.is_empty() {
+  let ret = if lang.covers(&pat.con, &lang.any()) {
+    if !pat.args.is_empty() {
       return Err(CheckError);
     }
     let tys = lang.get_arg_tys(ty, val_con)?;
@@ -168,13 +167,14 @@ fn specialize<L: Lang>(
       .rev()
       .collect();
     Some(ret)
-  } else if lang.covers(pat_con, val_con) {
+  } else if lang.covers(&pat.con, val_con) {
     let tys = lang.get_arg_tys(ty, val_con)?;
-    if tys.len() < pat_args.len() {
+    if tys.len() < pat.args.len() {
       return Err(CheckError);
     }
     // the `>` case can happen in the case of e.g. record patterns with missing labels.
-    let mut ret: Vec<_> = pat_args
+    let mut ret: Vec<_> = pat
+      .args
       .iter()
       .cloned()
       .chain(std::iter::repeat(Pat::any_no_idx(lang)))

@@ -107,7 +107,10 @@ impl<L: Lang> Pat<L> {
   /// Returns an `any` pattern with no `PatIdx`.
   pub fn any_no_idx(lang: &L) -> Self {
     Self {
-      raw: RawPat::Con(lang.any(), Vec::new()),
+      raw: RawPat::Con(ConPat {
+        con: lang.any(),
+        args: Vec::new(),
+      }),
       idx: None,
     }
   }
@@ -128,7 +131,7 @@ impl<L: Lang> Pat<L> {
     idx: Option<L::PatIdx>,
   ) -> Self {
     Self {
-      raw: RawPat::Con(con, args),
+      raw: RawPat::Con(ConPat { con, args }),
       idx,
     }
   }
@@ -145,7 +148,7 @@ impl<L: Lang> Pat<L> {
 /// A raw pattern.
 pub enum RawPat<L: Lang> {
   /// A constructor pattern.
-  Con(L::Con, Vec<Pat<L>>),
+  Con(ConPat<L>),
   /// An or pattern.
   Or(Vec<Pat<L>>),
 }
@@ -153,7 +156,7 @@ pub enum RawPat<L: Lang> {
 impl<L: Lang> fmt::Debug for RawPat<L> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      RawPat::Con(c, ps) => f.debug_tuple("Con").field(c).field(ps).finish(),
+      RawPat::Con(c) => f.debug_tuple("Con").field(c).finish(),
       RawPat::Or(ps) => f.debug_tuple("Or").field(ps).finish(),
     }
   }
@@ -162,8 +165,31 @@ impl<L: Lang> fmt::Debug for RawPat<L> {
 impl<L: Lang> Clone for RawPat<L> {
   fn clone(&self) -> Self {
     match self {
-      RawPat::Con(c, args) => RawPat::Con(c.clone(), args.clone()),
+      RawPat::Con(c) => RawPat::Con(c.clone()),
       RawPat::Or(ps) => RawPat::Or(ps.clone()),
+    }
+  }
+}
+
+pub struct ConPat<L: Lang> {
+  pub con: L::Con,
+  pub args: Vec<Pat<L>>,
+}
+
+impl<L: Lang> fmt::Debug for ConPat<L> {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    f.debug_struct("ConPat")
+      .field("con", &self.con)
+      .field("args", &self.args)
+      .finish()
+  }
+}
+
+impl<L: Lang> Clone for ConPat<L> {
+  fn clone(&self) -> Self {
+    Self {
+      con: self.con.clone(),
+      args: self.args.clone(),
     }
   }
 }

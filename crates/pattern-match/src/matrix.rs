@@ -1,6 +1,6 @@
 //! See [`Matrix`].
 
-use crate::types::{Lang, Pat, RawPat};
+use crate::types::{ConPat, Lang, Pat, RawPat};
 use std::fmt;
 
 /// A 2-D matrix of [`Pat`]s.
@@ -64,13 +64,24 @@ impl<L: Lang> Matrix<L> {
       Some(pat) => {
         let mut con_pats = Vec::new();
         expand_or(&mut con_pats, pat);
-        for (con, args) in con_pats {
+        for con_pat in con_pats {
           self.rows.push(Row::NonEmpty(NonEmptyRow {
             pats: row.clone(),
-            con,
-            args,
+            con_pat,
           }));
         }
+      }
+    }
+  }
+}
+
+/// Recursively expands or patterns.
+fn expand_or<L: Lang>(ac: &mut Vec<ConPat<L>>, pat: Pat<L>) {
+  match pat.raw {
+    RawPat::Con(p) => ac.push(p),
+    RawPat::Or(pats) => {
+      for pat in pats {
+        expand_or(ac, pat);
       }
     }
   }
@@ -114,18 +125,15 @@ impl<L: Lang> Row<L> {
 pub(crate) struct NonEmptyRow<L: Lang> {
   /// The other patterns in this row.
   pub pats: Vec<Pat<L>>,
-  /// The constructor of the last pattern, which is not an or-pattern.
-  pub con: L::Con,
-  /// The arguments of the last pattern, which is not an or-pattern.
-  pub args: Vec<Pat<L>>,
+  /// The last pattern.
+  pub con_pat: ConPat<L>,
 }
 
 impl<L: Lang> Clone for NonEmptyRow<L> {
   fn clone(&self) -> Self {
     Self {
       pats: self.pats.clone(),
-      con: self.con.clone(),
-      args: self.args.clone(),
+      con_pat: self.con_pat.clone(),
     }
   }
 }
@@ -134,20 +142,7 @@ impl<L: Lang> fmt::Debug for NonEmptyRow<L> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.debug_struct("NonEmptyRow")
       .field("pats", &self.pats)
-      .field("con", &self.con)
-      .field("args", &self.args)
+      .field("con_pat", &self.con_pat)
       .finish()
-  }
-}
-
-/// Recursively expands or patterns.
-fn expand_or<L: Lang>(ac: &mut Vec<(L::Con, Vec<Pat<L>>)>, pat: Pat<L>) {
-  match pat.raw {
-    RawPat::Con(con, args) => ac.push((con, args)),
-    RawPat::Or(pats) => {
-      for pat in pats {
-        expand_or(ac, pat);
-      }
-    }
   }
 }
