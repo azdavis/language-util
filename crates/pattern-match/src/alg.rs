@@ -19,13 +19,13 @@ pub fn check<L: Lang>(
   for pat in pats.iter() {
     get_pat_indices(&mut ac, pat);
   }
-  let mut matrix = Matrix::<L>::default();
+  let mut mtx = Matrix::<L>::default();
   for pat in pats {
-    useful(lang, &mut ac, &matrix, vec![(pat.clone(), ty.clone())])?;
-    matrix.push(vec![pat]);
+    useful(lang, &mut ac, 0, &mtx, vec![(pat.clone(), ty.clone())])?;
+    mtx.push(vec![pat]);
   }
   let missing: Vec<_> =
-    useful(lang, &mut ac, &matrix, vec![(Pat::any_no_idx(lang), ty)])?
+    useful(lang, &mut ac, 0, &mtx, vec![(Pat::any_no_idx(lang), ty)])?
       .witnesses
       .into_iter()
       .map(|mut w| {
@@ -85,16 +85,17 @@ type TypedPatVec<L> = Vec<(Pat<L>, <L as Lang>::Ty)>;
 fn useful<L: Lang>(
   lang: &L,
   ac: &mut FxHashSet<L::PatIdx>,
-  matrix: &Matrix<L>,
+  depth: usize,
+  mtx: &Matrix<L>,
   mut val: TypedPatVec<L>,
 ) -> Result<Useful<Pat<L>>> {
-  if let Some(nc) = matrix.num_cols() {
+  if let Some(nc) = mtx.num_cols() {
     assert_eq!(nc, val.len());
   }
   let (pat, ty) = match val.pop() {
     Some(x) => x,
     None => {
-      return Ok(if matrix.num_rows() == 0 {
+      return Ok(if mtx.num_rows() == 0 {
         Useful::yes()
       } else {
         Useful::no()
@@ -105,19 +106,19 @@ fn useful<L: Lang>(
   let idx = pat.idx;
   match pat.raw {
     RawPat::Or(or_pats) => {
-      let mut m = matrix.clone();
+      let mut m = mtx.clone();
       for pat in or_pats {
         let mut val = val.clone();
         val.push((pat, ty.clone()));
-        ret.extend(useful(lang, ac, &m, val.clone())?);
+        ret.extend(useful(lang, ac, depth + 1, &m, val.clone())?);
         m.push(val.into_iter().map(|(x, _)| x).collect());
       }
     }
     RawPat::Con(con_pat) => {
-      let last_col = matrix.non_empty_rows().map(|r| &r.con_pat.con);
-      for con in lang.split(&ty, &con_pat.con, last_col)? {
+      let last_col = mtx.non_empty_rows().map(|r| &r.con_pat.con);
+      for con in lang.split(&ty, &con_pat.con, last_col, depth)? {
         let mut m = Matrix::<L>::default();
-        for row in matrix.non_empty_rows() {
+        for row in mtx.non_empty_rows() {
           let new = specialize(lang, &ty, &row.con_pat, &con)?;
           if let Some(new) = new {
             let mut pats = row.pats.clone();
@@ -130,7 +131,7 @@ fn useful<L: Lang>(
         let new_len = new.len();
         let mut val = val.clone();
         val.extend(new);
-        let mut u = useful(lang, ac, &m, val)?;
+        let mut u = useful(lang, ac, depth + 1, &m, val)?;
         for w in u.witnesses.iter_mut() {
           let args: Vec<_> = w.drain(w.len() - new_len..).rev().collect();
           w.push(Pat::con_(con.clone(), args, idx));

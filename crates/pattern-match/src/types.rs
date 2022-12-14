@@ -55,11 +55,15 @@ pub trait Lang {
   /// Splits a constructor with the given type into 'real' constructors.
   ///
   /// `cons` are the constructors that are already somewhat covered.
+  ///
+  /// `depth` is the depth of this split, starting at 0. Implementations may wish to return fewer
+  /// constructors at higher depths, but this is not required.
   fn split<'a, I>(
     &self,
     ty: &Self::Ty,
     con: &Self::Con,
     cons: I,
+    depth: usize,
   ) -> Result<Vec<Self::Con>>
   where
     Self::Con: 'a,
