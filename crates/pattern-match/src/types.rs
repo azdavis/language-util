@@ -171,8 +171,11 @@ impl<L: Lang> Clone for RawPat<L> {
   }
 }
 
+/// A constructor pattern.
 pub struct ConPat<L: Lang> {
+  /// The constructor.
   pub con: L::Con,
+  /// The arguments.
   pub args: Vec<Pat<L>>,
 }
 

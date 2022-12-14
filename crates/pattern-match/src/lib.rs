@@ -13,4 +13,4 @@ mod matrix;
 mod types;
 
 pub use alg::check;
-pub use types::{Check, CheckError, Lang, Pat, RawPat, Result};
+pub use types::{Check, CheckError, ConPat, Lang, Pat, RawPat, Result};
