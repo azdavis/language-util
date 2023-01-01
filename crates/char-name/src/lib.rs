@@ -29,6 +29,7 @@ pub fn get_opt(c: char) -> Option<&'static str> {
     '>' => "Gt",
     '|' => "Bar",
     '~' => "Tilde",
+    '`' => "Tick",
     _ => return None,
   };
   Some(ret)
