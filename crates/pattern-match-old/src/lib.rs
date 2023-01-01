@@ -19,7 +19,7 @@
 
 #![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
-use rustc_hash::FxHashSet;
+use fast_hash::FxHashSet;
 use std::hash::Hash;
 
 /// A pattern.

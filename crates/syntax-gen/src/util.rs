@@ -1,6 +1,6 @@
 use crate::token::TokenDb;
+use fast_hash::FxHashSet;
 use proc_macro2::Ident;
-use rustc_hash::FxHashSet;
 use std::fs::OpenOptions;
 use std::io::{Result, Write as _};
 use std::process::{Command, Stdio};

@@ -11,6 +11,6 @@ test = false
 [dependencies]
 proc-macro2 = "1"
 quote = "1"
-rustc-hash = "1"
+fast-hash = { path = "../fast-hash" }
 ungrammar = "1"
 identifier-case = { path = "../identifier-case" }

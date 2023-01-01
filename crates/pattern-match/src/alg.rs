@@ -2,7 +2,7 @@
 
 use crate::matrix::Matrix;
 use crate::types::{Check, CheckError, ConPat, Lang, Pat, RawPat, Result};
-use rustc_hash::FxHashSet;
+use fast_hash::FxHashSet;
 
 /// Does the check.
 ///

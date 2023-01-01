@@ -1,6 +1,6 @@
 //! See [`Pat`].
 
-use rustc_hash::FxHashSet;
+use fast_hash::FxHashSet;
 use std::fmt::{self, Debug};
 use std::hash::Hash;
 

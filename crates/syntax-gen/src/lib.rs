@@ -10,9 +10,9 @@ mod token;
 mod util;
 
 use crate::util::Cx;
+use fast_hash::FxHashSet;
 use proc_macro2::Literal;
 use quote::quote;
-use rustc_hash::FxHashSet;
 use std::cmp::Reverse;
 use token::ident;
 use ungrammar::{Grammar, Rule};

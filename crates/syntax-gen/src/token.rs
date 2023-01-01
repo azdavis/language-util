@@ -1,4 +1,4 @@
-use rustc_hash::FxHashMap;
+use fast_hash::FxHashMap;
 
 #[derive(Debug)]
 pub(crate) struct TokenDb {

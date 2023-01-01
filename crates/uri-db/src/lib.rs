@@ -7,7 +7,7 @@
 
 pub use url::Url as Uri;
 
-use rustc_hash::FxHashMap;
+use fast_hash::FxHashMap;
 use std::borrow::Borrow;
 use std::hash::Hash;
 use std::ops::Index;

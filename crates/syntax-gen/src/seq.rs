@@ -47,7 +47,7 @@ pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
   }
 }
 
-type Counts<T> = rustc_hash::FxHashMap<T, usize>;
+type Counts<T> = fast_hash::FxHashMap<T, usize>;
 
 fn get_idx<T>(counts: &mut Counts<T>, key: T) -> usize
 where

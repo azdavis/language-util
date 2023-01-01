@@ -1,8 +1,8 @@
 use crate::token::ident;
 use crate::util::{unwrap_node, unwrap_token, Cx};
+use fast_hash::FxHashSet;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
-use rustc_hash::FxHashSet;
 use ungrammar::Rule;
 
 pub(crate) fn get(
