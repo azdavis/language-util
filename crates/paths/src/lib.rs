@@ -2,8 +2,6 @@
 
 #![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
-pub mod slash_var_path;
-
 pub use glob::{GlobError, PatternError};
 
 use fast_hash::FxHashMap;
