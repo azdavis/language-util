@@ -130,8 +130,7 @@ where
     quote! { (#bs, Self::#kind) }
   });
   let special = {
-    let mut xs: Vec<_> =
-      tokens.special.into_iter().map(|(_, tok)| tok).collect();
+    let mut xs: Vec<_> = tokens.special.into_values().collect();
     xs.sort_unstable();
     xs
   };
