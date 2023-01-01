@@ -40,5 +40,9 @@ where
 }
 
 fn code_h2(s: &str) -> Option<&str> {
-  s.strip_prefix("## `")?.strip_suffix('`')
+  let mut ret = s.strip_prefix("## `")?.strip_suffix('`')?;
+  if ret == "` ` `" {
+    ret = "`";
+  }
+  Some(ret)
 }
