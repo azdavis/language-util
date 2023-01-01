@@ -35,8 +35,7 @@ fn simple() {
 
 #[test]
 fn cycle() {
-  let graph =
-    BTreeMap::from([(2, BTreeSet::from([1])), (1, BTreeSet::from([2]))]);
+  let graph = BTreeMap::from([(2, BTreeSet::from([1])), (1, BTreeSet::from([2]))]);
   check_cycle(graph);
 }
 
@@ -71,10 +70,7 @@ fn bigger_cycle() {
 
 #[test]
 fn hm_cycle() {
-  let graph = BTreeMap::from([
-    (1, BTreeSet::from([2])),
-    (2, BTreeSet::from([1])),
-    (3, BTreeSet::from([1])),
-  ]);
+  let graph =
+    BTreeMap::from([(1, BTreeSet::from([2])), (2, BTreeSet::from([1])), (3, BTreeSet::from([1]))]);
   check_cycle(graph);
 }

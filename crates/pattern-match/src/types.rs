@@ -71,11 +71,7 @@ pub trait Lang {
 
   /// Returns the types of the arguments to a constructor pattern with the given
   /// type `ty` and constructor `con`.
-  fn get_arg_tys(
-    &self,
-    ty: &Self::Ty,
-    con: &Self::Con,
-  ) -> Result<Vec<Self::Ty>>;
+  fn get_arg_tys(&self, ty: &Self::Ty, con: &Self::Con) -> Result<Vec<Self::Ty>>;
 
   /// Returns whether `lhs` covers `rhs`. Sometimes this is as simple as returning `lhs == rhs`.
   fn covers(&self, lhs: &Self::Con, rhs: &Self::Con) -> bool;
@@ -91,32 +87,20 @@ pub struct Pat<L: Lang> {
 
 impl<L: Lang> fmt::Debug for Pat<L> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.debug_struct("Pat")
-      .field("raw", &self.raw)
-      .field("idx", &self.idx)
-      .finish()
+    f.debug_struct("Pat").field("raw", &self.raw).field("idx", &self.idx).finish()
   }
 }
 
 impl<L: Lang> Clone for Pat<L> {
   fn clone(&self) -> Self {
-    Self {
-      raw: self.raw.clone(),
-      idx: self.idx,
-    }
+    Self { raw: self.raw.clone(), idx: self.idx }
   }
 }
 
 impl<L: Lang> Pat<L> {
   /// Returns an `any` pattern with no `PatIdx`.
   pub fn any_no_idx(lang: &L) -> Self {
-    Self {
-      raw: RawPat::Con(ConPat {
-        con: lang.any(),
-        args: Vec::new(),
-      }),
-      idx: None,
-    }
+    Self { raw: RawPat::Con(ConPat { con: lang.any(), args: Vec::new() }), idx: None }
   }
 
   /// Returns a constructor pattern.
@@ -129,23 +113,13 @@ impl<L: Lang> Pat<L> {
     Self::con_(con, Vec::new(), Some(idx))
   }
 
-  pub(crate) fn con_(
-    con: L::Con,
-    args: Vec<Self>,
-    idx: Option<L::PatIdx>,
-  ) -> Self {
-    Self {
-      raw: RawPat::Con(ConPat { con, args }),
-      idx,
-    }
+  pub(crate) fn con_(con: L::Con, args: Vec<Self>, idx: Option<L::PatIdx>) -> Self {
+    Self { raw: RawPat::Con(ConPat { con, args }), idx }
   }
 
   /// Returns an or pattern.
   pub fn or(pats: Vec<Self>, idx: L::PatIdx) -> Self {
-    Self {
-      raw: RawPat::Or(pats),
-      idx: Some(idx),
-    }
+    Self { raw: RawPat::Or(pats), idx: Some(idx) }
   }
 }
 
@@ -185,18 +159,12 @@ pub struct ConPat<L: Lang> {
 
 impl<L: Lang> fmt::Debug for ConPat<L> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.debug_struct("ConPat")
-      .field("con", &self.con)
-      .field("args", &self.args)
-      .finish()
+    f.debug_struct("ConPat").field("con", &self.con).field("args", &self.args).finish()
   }
 }
 
 impl<L: Lang> Clone for ConPat<L> {
   fn clone(&self) -> Self {
-    Self {
-      con: self.con.clone(),
-      args: self.args.clone(),
-    }
+    Self { con: self.con.clone(), args: self.args.clone() }
   }
 }

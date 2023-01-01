@@ -10,11 +10,7 @@ use fast_hash::FxHashSet;
 /// `lang` returned an error.
 ///
 /// This should never panic. It's a bug if this panics.
-pub fn check<L: Lang>(
-  lang: &L,
-  pats: Vec<Pat<L>>,
-  ty: L::Ty,
-) -> Result<Check<L>> {
+pub fn check<L: Lang>(lang: &L, pats: Vec<Pat<L>>, ty: L::Ty) -> Result<Check<L>> {
   let mut ac = FxHashSet::default();
   for pat in pats.iter() {
     get_pat_indices(&mut ac, pat);
@@ -24,19 +20,15 @@ pub fn check<L: Lang>(
     useful(lang, &mut ac, 0, &mtx, vec![(pat.clone(), ty.clone())])?;
     mtx.push(vec![pat]);
   }
-  let missing: Vec<_> =
-    useful(lang, &mut ac, 0, &mtx, vec![(Pat::any_no_idx(lang), ty)])?
-      .witnesses
-      .into_iter()
-      .map(|mut w| {
-        assert_eq!(w.len(), 1);
-        w.pop().expect("just checked length")
-      })
-      .collect();
-  Ok(Check {
-    unreachable: ac,
-    missing,
-  })
+  let missing: Vec<_> = useful(lang, &mut ac, 0, &mtx, vec![(Pat::any_no_idx(lang), ty)])?
+    .witnesses
+    .into_iter()
+    .map(|mut w| {
+      assert_eq!(w.len(), 1);
+      w.pop().expect("just checked length")
+    })
+    .collect();
+  Ok(Check { unreachable: ac, missing })
 }
 
 /// Adds all the pat indices in the Pat to the set.
@@ -65,9 +57,7 @@ struct Useful<P> {
 
 impl<P> Useful<P> {
   fn yes() -> Self {
-    Self {
-      witnesses: vec![vec![]],
-    }
+    Self { witnesses: vec![vec![]] }
   }
 
   fn no() -> Self {
@@ -95,11 +85,7 @@ fn useful<L: Lang>(
   let (pat, ty) = match val.pop() {
     Some(x) => x,
     None => {
-      return Ok(if mtx.num_rows() == 0 {
-        Useful::yes()
-      } else {
-        Useful::no()
-      });
+      return Ok(if mtx.num_rows() == 0 { Useful::yes() } else { Useful::no() });
     }
   };
   let mut ret = Useful::<Pat<L>>::no();
@@ -126,8 +112,7 @@ fn useful<L: Lang>(
             m.push(pats);
           }
         }
-        let new = specialize(lang, &ty, &con_pat, &con)?
-          .expect("p_con must cover itself");
+        let new = specialize(lang, &ty, &con_pat, &con)?.expect("p_con must cover itself");
         let new_len = new.len();
         let mut val = val.clone();
         val.extend(new);
@@ -162,11 +147,7 @@ fn specialize<L: Lang>(
       return Err(CheckError);
     }
     let tys = lang.get_arg_tys(ty, val_con)?;
-    let ret: Vec<_> = tys
-      .into_iter()
-      .map(|t| (Pat::any_no_idx(lang), t))
-      .rev()
-      .collect();
+    let ret: Vec<_> = tys.into_iter().map(|t| (Pat::any_no_idx(lang), t)).rev().collect();
     Some(ret)
   } else if lang.covers(&pat.con, val_con) {
     let tys = lang.get_arg_tys(ty, val_con)?;
@@ -174,13 +155,8 @@ fn specialize<L: Lang>(
       return Err(CheckError);
     }
     // the `>` case can happen in the case of e.g. record patterns with missing labels.
-    let mut ret: Vec<_> = pat
-      .args
-      .iter()
-      .cloned()
-      .chain(std::iter::repeat(Pat::any_no_idx(lang)))
-      .zip(tys)
-      .collect();
+    let mut ret: Vec<_> =
+      pat.args.iter().cloned().chain(std::iter::repeat(Pat::any_no_idx(lang))).zip(tys).collect();
     ret.reverse();
     Some(ret)
   } else {

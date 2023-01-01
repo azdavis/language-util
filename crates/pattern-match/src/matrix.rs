@@ -17,9 +17,7 @@ impl<L: Lang> Default for Matrix<L> {
 
 impl<L: Lang> Clone for Matrix<L> {
   fn clone(&self) -> Self {
-    Self {
-      rows: self.rows.clone(),
-    }
+    Self { rows: self.rows.clone() }
   }
 }
 
@@ -65,10 +63,7 @@ impl<L: Lang> Matrix<L> {
         let mut con_pats = Vec::new();
         expand_or(&mut con_pats, pat);
         for con_pat in con_pats {
-          self.rows.push(Row::NonEmpty(NonEmptyRow {
-            pats: row.clone(),
-            con_pat,
-          }));
+          self.rows.push(Row::NonEmpty(NonEmptyRow { pats: row.clone(), con_pat }));
         }
       }
     }
@@ -131,18 +126,12 @@ pub(crate) struct NonEmptyRow<L: Lang> {
 
 impl<L: Lang> Clone for NonEmptyRow<L> {
   fn clone(&self) -> Self {
-    Self {
-      pats: self.pats.clone(),
-      con_pat: self.con_pat.clone(),
-    }
+    Self { pats: self.pats.clone(), con_pat: self.con_pat.clone() }
   }
 }
 
 impl<L: Lang> fmt::Debug for NonEmptyRow<L> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.debug_struct("NonEmptyRow")
-      .field("pats", &self.pats)
-      .field("con_pat", &self.con_pat)
-      .finish()
+    f.debug_struct("NonEmptyRow").field("pats", &self.pats).field("con_pat", &self.con_pat).finish()
   }
 }

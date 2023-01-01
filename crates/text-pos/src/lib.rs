@@ -38,10 +38,7 @@ impl PositionDb {
         non_ascii.push((col, diff));
       }
       if c == '\n' {
-        lines.push(Line {
-          end,
-          non_ascii: non_ascii.into_boxed_slice(),
-        });
+        lines.push(Line { end, non_ascii: non_ascii.into_boxed_slice() });
         non_ascii = Vec::new();
         col = TextSize::from(0);
       }
@@ -49,13 +46,8 @@ impl PositionDb {
       end += ts;
       col += ts;
     }
-    lines.push(Line {
-      end,
-      non_ascii: non_ascii.into_boxed_slice(),
-    });
-    Self {
-      lines: lines.into_boxed_slice(),
-    }
+    lines.push(Line { end, non_ascii: non_ascii.into_boxed_slice() });
+    Self { lines: lines.into_boxed_slice() }
   }
 
   /// Translates a `TextSize` into a `Position`.
@@ -75,10 +67,7 @@ impl PositionDb {
         break;
       }
     }
-    Some(Position {
-      line: line.try_into().ok()?,
-      character,
-    })
+    Some(Position { line: line.try_into().ok()?, character })
   }
 
   /// Translates a `Position` into a `TextSize`.
@@ -86,10 +75,8 @@ impl PositionDb {
   /// The `Position` must be within the bounds of the original input.
   pub fn text_size(&self, pos: Position) -> Option<TextSize> {
     let line: usize = pos.line.try_into().ok()?;
-    let start = line
-      .checked_sub(1)
-      .and_then(|line| self.start(line))
-      .unwrap_or_else(|| TextSize::from(0));
+    let start =
+      line.checked_sub(1).and_then(|line| self.start(line)).unwrap_or_else(|| TextSize::from(0));
     let mut col = pos.character;
     for &(idx, diff) in self.lines.get(line)?.non_ascii.iter() {
       if u32::from(idx) < col {
@@ -105,20 +92,14 @@ impl PositionDb {
   ///
   /// The `TextRange` must be within the bounds of the original input.
   pub fn range(&self, text_range: TextRange) -> Option<Range> {
-    Some(Range {
-      start: self.position(text_range.start())?,
-      end: self.position(text_range.end())?,
-    })
+    Some(Range { start: self.position(text_range.start())?, end: self.position(text_range.end())? })
   }
 
   /// Translates a `Range` into a `TextRange`.
   ///
   /// The `Range` must be within the bounds of the original input.
   pub fn text_range(&self, range: Range) -> Option<TextRange> {
-    Some(TextRange::new(
-      self.text_size(range.start)?,
-      self.text_size(range.end)?,
-    ))
+    Some(TextRange::new(self.text_size(range.start)?, self.text_size(range.end)?))
   }
 
   /// Return the TextSize of the end of the original text.
@@ -128,9 +109,7 @@ impl PositionDb {
 
   /// Return the Position of the end of the original text.
   pub fn end_position(&self) -> Position {
-    self
-      .position(self.end_text_size())
-      .expect("end_text_size is valid")
+    self.position(self.end_text_size()).expect("end_text_size is valid")
   }
 
   fn start(&self, line: usize) -> Option<TextSize> {

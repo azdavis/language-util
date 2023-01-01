@@ -39,11 +39,7 @@ pub struct Parser<'a, K, E> {
 impl<'a, K, E> Parser<'a, K, E> {
   /// Returns a new parser for the given tokens.
   pub fn new(tokens: &'a [Token<'a, K>]) -> Self {
-    Self {
-      tokens,
-      tok_idx: 0,
-      events: Vec::new(),
-    }
+    Self { tokens, tok_idx: 0, events: Vec::new() }
   }
 
   /// Starts parsing a syntax construct.
@@ -68,11 +64,7 @@ impl<'a, K, E> Parser<'a, K, E> {
   pub fn enter(&mut self) -> Entered {
     let ev_idx = self.events.len();
     self.events.push(None);
-    Entered {
-      bomb: DropBomb::new("Entered markers must be exited"),
-      ev_idx,
-      tok_idx: self.tok_idx,
-    }
+    Entered { bomb: DropBomb::new("Entered markers must be exited"), ev_idx, tok_idx: self.tok_idx }
   }
 
   /// Abandons parsing a syntax construct.
@@ -91,10 +83,7 @@ impl<'a, K, E> Parser<'a, K, E> {
     assert!(ev.is_none());
     *ev = Some(Event::Enter(kind, None));
     self.events.push(Some(Event::Exit));
-    Exited {
-      ev_idx: en.ev_idx,
-      is_empty: self.tok_idx == en.tok_idx,
-    }
+    Exited { ev_idx: en.ev_idx, is_empty: self.tok_idx == en.tok_idx }
   }
 
   /// Starts parsing a syntax construct and makes it the parent of the given
@@ -142,20 +131,14 @@ impl<'a, K, E> Parser<'a, K, E> {
   /// }
   /// ```
   pub fn save(&self) -> Save {
-    Save {
-      tok_idx: self.tok_idx,
-      events_len: self.events.len(),
-    }
+    Save { tok_idx: self.tok_idx, events_len: self.events.len() }
   }
 
   /// Returns whether there were _no_ errors since the save, i.e. whether we did
   /// _not_ restore to that save.
   pub fn ok_since(&mut self, save: Save) -> bool {
-    let error_since = self
-      .events
-      .iter()
-      .skip(save.events_len)
-      .any(|ev| matches!(*ev, Some(Event::Error(..))));
+    let error_since =
+      self.events.iter().skip(save.events_len).any(|ev| matches!(*ev, Some(Event::Error(..))));
     if error_since {
       self.tok_idx = save.tok_idx;
       self.events.truncate(save.events_len);

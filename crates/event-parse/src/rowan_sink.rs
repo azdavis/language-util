@@ -1,9 +1,7 @@
 //! A [`Sink`] for Rowan trees.
 
 use crate::Sink;
-use rowan::{
-  GreenNodeBuilder, Language, SyntaxKind, SyntaxNode, TextRange, TextSize,
-};
+use rowan::{GreenNodeBuilder, Language, SyntaxKind, SyntaxNode, TextRange, TextSize};
 use token::{Token, Triviable};
 
 /// The sink, which wraps a Rowan `GreenNodeBuilder`.
@@ -28,12 +26,7 @@ impl<E> RowanSink<E> {
 
   fn extend_errors(&mut self) {
     let errors =
-      std::mem::take(&mut self.no_range)
-        .into_iter()
-        .map(|kind| Error {
-          range: self.range,
-          kind,
-        });
+      std::mem::take(&mut self.no_range).into_iter().map(|kind| Error { range: self.range, kind });
     self.errors.extend(errors);
   }
 }

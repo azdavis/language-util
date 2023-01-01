@@ -63,12 +63,7 @@ where
   let mut types = Vec::new();
   let trivia: Vec<_> = trivia.iter().map(|&x| ident(x)).collect();
   let mut node_syntax_kinds = Vec::new();
-  let mut cx = Cx {
-    lang,
-    grammar,
-    tokens,
-    token_alts: FxHashSet::default(),
-  };
+  let mut cx = Cx { lang, grammar, tokens, token_alts: FxHashSet::default() };
   let mut token_alts = FxHashSet::default();
   // first process all the alts
   for node in cx.grammar.iter() {
@@ -94,12 +89,7 @@ where
     node_syntax_kinds.push(name.clone());
     types.push(seq::get(&cx, name, rules));
   }
-  let Cx {
-    grammar,
-    tokens,
-    lang,
-    ..
-  } = cx;
+  let Cx { grammar, tokens, lang, .. } = cx;
   let keywords = {
     let mut xs: Vec<_> = tokens
       .keywords
@@ -147,16 +137,14 @@ where
       let desc = tok.desc.as_ref()?;
       Some(quote! { Self::#kind => #desc })
     }));
-  let doc_arms = punctuation
-    .iter()
-    .chain(keywords.iter())
-    .map(|(_, tok)| tok)
-    .chain(special.iter())
-    .filter_map(|tok| {
-      let doc = tok.doc.as_ref()?;
-      let kind = tok.name_ident();
-      Some(quote! { Self::#kind => #doc })
-    });
+  let doc_arms =
+    punctuation.iter().chain(keywords.iter()).map(|(_, tok)| tok).chain(special.iter()).filter_map(
+      |tok| {
+        let doc = tok.doc.as_ref()?;
+        let kind = tok.name_ident();
+        Some(quote! { Self::#kind => #doc })
+      },
+    );
   let self_trivia = trivia.iter().map(|id| {
     quote! { Self::#id }
   });
@@ -164,12 +152,7 @@ where
   let syntax_kinds: Vec<_> = trivia
     .iter()
     .cloned()
-    .chain(
-      keywords
-        .iter()
-        .chain(punctuation.iter())
-        .map(|(_, tok)| tok.name_ident()),
-    )
+    .chain(keywords.iter().chain(punctuation.iter()).map(|(_, tok)| tok.name_ident()))
     .chain(special.iter().map(|tok| tok.name_ident()))
     .chain(node_syntax_kinds)
     .collect();
@@ -296,13 +279,7 @@ where
 
     #(#types)*
   };
-  util::write_rust_file(
-    out_dir.join("kind.rs").as_path(),
-    kind.to_string().as_str(),
-  )?;
-  util::write_rust_file(
-    out_dir.join("ast.rs").as_path(),
-    ast.to_string().as_str(),
-  )?;
+  util::write_rust_file(out_dir.join("kind.rs").as_path(), kind.to_string().as_str())?;
+  util::write_rust_file(out_dir.join("ast.rs").as_path(), ast.to_string().as_str())?;
   Ok(())
 }

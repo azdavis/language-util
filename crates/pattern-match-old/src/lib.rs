@@ -192,11 +192,7 @@ fn static_match<C: Con>(con: C, desc: &Desc<C>) -> StaticMatch<C> {
 
 /// Tries to pass the next pattern in `pats` to a fresh call to `do_match`.
 /// Returns whether the match was exhaustive.
-fn fail<C: Con>(
-  r: &mut Reachable,
-  desc: Desc<C>,
-  mut pats: Pats<'_, C>,
-) -> bool {
+fn fail<C: Con>(r: &mut Reachable, desc: Desc<C>, mut pats: Pats<'_, C>) -> bool {
   match pats.next() {
     None => false,
     Some((idx, pat)) => do_match(r, idx, pat.clone(), desc, Vec::new(), pats),
@@ -205,12 +201,7 @@ fn fail<C: Con>(
 
 /// Tries to prove a pat located at the index is reachable. Sets that index to
 /// true if it can prove this. Returns whether the match was exhaustive.
-fn succeed<C: Con>(
-  r: &mut Reachable,
-  idx: usize,
-  mut work: Work<C>,
-  pats: Pats<'_, C>,
-) -> bool {
+fn succeed<C: Con>(r: &mut Reachable, idx: usize, mut work: Work<C>, pats: Pats<'_, C>) -> bool {
   loop {
     match work.pop() {
       None => {
@@ -247,12 +238,7 @@ fn succeed_with<C: Con>(
   work.push(WorkItem {
     con,
     descs: Vec::new(),
-    args: arg_pats
-      .into_iter()
-      .zip(arg_descs)
-      .rev()
-      .map(|(pat, desc)| Arg { pat, desc })
-      .collect(),
+    args: arg_pats.into_iter().zip(arg_descs).rev().map(|(pat, desc)| Arg { pat, desc }).collect(),
   });
   succeed(r, idx, work, pats)
 }

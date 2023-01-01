@@ -57,11 +57,7 @@ impl TokenDb {
         }
       }
     }
-    Self {
-      punctuation,
-      keywords,
-      special,
-    }
+    Self { punctuation, keywords, special }
   }
 
   pub(crate) fn get(&self, token: ungrammar::Token) -> &Token {

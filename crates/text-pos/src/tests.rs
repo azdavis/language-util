@@ -63,12 +63,8 @@ fn lsp_spec_example() {
 
 #[test]
 fn end() {
-  for (text, line, character) in [
-    ("", 0, 0),
-    ("foo", 0, 3),
-    ("foo\nuh", 1, 2),
-    ("foo\nuh\n", 2, 0),
-  ] {
+  for (text, line, character) in [("", 0, 0), ("foo", 0, 3), ("foo\nuh", 1, 2), ("foo\nuh\n", 2, 0)]
+  {
     let db = PositionDb::new(text);
     assert_eq!(db.end_position(), Position { line, character })
   }

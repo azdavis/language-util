@@ -72,11 +72,7 @@ impl Modifier {
   }
 }
 
-fn field<'cx>(
-  cx: &'cx Cx,
-  counts: &mut Counts<&'cx str>,
-  mut rule: &Rule,
-) -> TokenStream {
+fn field<'cx>(cx: &'cx Cx, counts: &mut Counts<&'cx str>, mut rule: &Rule) -> TokenStream {
   let mut modifier = Modifier::Regular;
   let mut label: Option<&str> = None;
   let name: &str;
