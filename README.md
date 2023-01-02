@@ -78,7 +78,7 @@ A small utility crate for formatting.
 
 ## `diagnostic-util`
 
-A small crate defining primarily the overall `Error` type, which Millet reports to a language client.
+A small crate defining primarily the overall `Error` type, which a language server reports to a client.
 
 ## `fast-hash`
 
