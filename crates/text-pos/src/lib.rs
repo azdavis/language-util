@@ -6,6 +6,7 @@
 mod tests;
 
 use fast_hash::FxHashMap;
+use std::fmt;
 use text_size_util::{TextRange, TextSize};
 
 /// Converts between flat [`TextSize`] offsets and `(line, col)` representation, with handling for
@@ -233,6 +234,12 @@ pub struct PositionUtf16 {
   pub col: u32,
 }
 
+impl fmt::Display for PositionUtf16 {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}:{}", self.line + 1, self.col + 1)
+  }
+}
+
 /// A pair of start and end positions for UTF-16.
 ///
 /// `start` comes before `end`.
@@ -242,6 +249,12 @@ pub struct RangeUtf16 {
   pub start: PositionUtf16,
   /// The end.
   pub end: PositionUtf16,
+}
+
+impl fmt::Display for RangeUtf16 {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}-{}", self.start, self.end)
+  }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
