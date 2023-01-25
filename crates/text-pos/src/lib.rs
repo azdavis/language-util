@@ -206,22 +206,22 @@ impl PositionDb {
 
 /// A pair of `(line, col)` for UTF-8.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct PositionUtf8 {
+struct PositionUtf8 {
   /// Zero-based.
-  pub line: u32,
+  line: u32,
   /// Zero-based utf8 offset.
-  pub col: u32,
+  col: u32,
 }
 
 /// A pair of start and end positions for UTF-8.
 ///
 /// `start` comes before `end`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct RangeUtf8 {
+struct RangeUtf8 {
   /// The start.
-  pub start: PositionUtf8,
+  start: PositionUtf8,
   /// The end.
-  pub end: PositionUtf8,
+  end: PositionUtf8,
 }
 
 /// A pair of `(line, col)` for UTF-16.
