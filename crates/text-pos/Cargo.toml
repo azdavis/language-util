@@ -9,4 +9,5 @@ publish = false
 doctest = false
 
 [dependencies]
-text-size = "1"
+fast-hash = { path = "../fast-hash" }
+text-size-util = { path = "../text-size-util" }

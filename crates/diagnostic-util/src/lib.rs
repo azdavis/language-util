@@ -8,7 +8,7 @@ use std::fmt;
 #[derive(Debug)]
 pub struct Diagnostic {
   /// The range of the error.
-  pub range: text_pos::Range,
+  pub range: text_pos::RangeUtf16,
   /// The message of the error.
   pub message: String,
   /// The error code.
