@@ -20,14 +20,14 @@ fn text_pos() {
 
   let index = PositionDb::new(text);
   for (offset, line, col) in table {
-    assert_eq!(index.position(offset.into()).unwrap(), PositionUtf8 { line, col });
+    assert_eq!(index.position_utf8(offset.into()).unwrap(), PositionUtf8 { line, col });
   }
 
   let text = "\nhello\nworld";
   let table = [(0, 0, 0), (1, 1, 0), (2, 1, 1), (6, 1, 5), (7, 2, 0)];
   let index = PositionDb::new(text);
   for (offset, line, col) in table {
-    assert_eq!(index.position(offset.into()).unwrap(), PositionUtf8 { line, col });
+    assert_eq!(index.position_utf8(offset.into()).unwrap(), PositionUtf8 { line, col });
   }
 }
 
@@ -60,19 +60,19 @@ const C: char = 'メ';
   assert_eq!(col_index.utf16_lines[&1][0], CharUtf16 { start: 17.into(), end: 20.into() });
 
   // UTF-8 to UTF-16, no changes
-  assert_eq!(col_index.to_utf16_col(1, 15.into()), 15);
+  assert_eq!(col_index.col_to_utf16(1, 15.into()), 15);
 
   // UTF-8 to UTF-16
-  assert_eq!(col_index.to_utf16_col(1, 22.into()), 20);
+  assert_eq!(col_index.col_to_utf16(1, 22.into()), 20);
 
   // UTF-16 to UTF-8, no changes
-  assert_eq!(col_index.to_utf8_col(1, 15), TextSize::from(15));
+  assert_eq!(col_index.col_to_utf8(1, 15), TextSize::from(15));
 
   // UTF-16 to UTF-8
-  assert_eq!(col_index.to_utf8_col(1, 19), TextSize::from(21));
+  assert_eq!(col_index.col_to_utf8(1, 19), TextSize::from(21));
 
   let col_index = PositionDb::new("a𐐏b");
-  assert_eq!(col_index.to_utf8_col(0, 3), TextSize::from(5));
+  assert_eq!(col_index.col_to_utf8(0, 3), TextSize::from(5));
 }
 
 #[test]
@@ -89,22 +89,22 @@ const C: char = \"メ メ\";
   assert_eq!(col_index.utf16_lines[&1][1], CharUtf16 { start: 21.into(), end: 24.into() });
 
   // UTF-8 to UTF-16
-  assert_eq!(col_index.to_utf16_col(1, 15.into()), 15);
+  assert_eq!(col_index.col_to_utf16(1, 15.into()), 15);
 
-  assert_eq!(col_index.to_utf16_col(1, 21.into()), 19);
-  assert_eq!(col_index.to_utf16_col(1, 25.into()), 21);
+  assert_eq!(col_index.col_to_utf16(1, 21.into()), 19);
+  assert_eq!(col_index.col_to_utf16(1, 25.into()), 21);
 
-  assert!(col_index.to_utf16_col(2, 15.into()) == 15);
+  assert!(col_index.col_to_utf16(2, 15.into()) == 15);
 
   // UTF-16 to UTF-8
-  assert_eq!(col_index.to_utf8_col(1, 15), TextSize::from(15));
+  assert_eq!(col_index.col_to_utf8(1, 15), TextSize::from(15));
 
   // メ UTF-8: 0xE3 0x83 0xA1, UTF-16: 0x30E1
-  assert_eq!(col_index.to_utf8_col(1, 17), TextSize::from(17)); // first メ at 17..20
-  assert_eq!(col_index.to_utf8_col(1, 18), TextSize::from(20)); // space
-  assert_eq!(col_index.to_utf8_col(1, 19), TextSize::from(21)); // second メ at 21..24
+  assert_eq!(col_index.col_to_utf8(1, 17), TextSize::from(17)); // first メ at 17..20
+  assert_eq!(col_index.col_to_utf8(1, 18), TextSize::from(20)); // space
+  assert_eq!(col_index.col_to_utf8(1, 19), TextSize::from(21)); // second メ at 21..24
 
-  assert_eq!(col_index.to_utf8_col(2, 15), TextSize::from(15));
+  assert_eq!(col_index.col_to_utf8(2, 15), TextSize::from(15));
 }
 
 fn r(lo: u32, hi: u32) -> TextRange {

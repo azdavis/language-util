@@ -6,7 +6,6 @@
 mod tests;
 
 use fast_hash::FxHashMap;
-use std::{iter, mem};
 use text_size_util::{TextRange, TextSize};
 
 /// Converts between flat [`TextSize`] offsets and `(line, col)` representation, with handling for
@@ -41,7 +40,7 @@ impl PositionDb {
         ret.newlines.push(row);
         // Save any UTF-16 characters seen in the previous line
         if !utf16_chars.is_empty() {
-          ret.utf16_lines.insert(line, mem::take(&mut utf16_chars));
+          ret.utf16_lines.insert(line, std::mem::take(&mut utf16_chars));
         }
         // Prepare for processing the next line
         col = TextSize::from(0);
@@ -60,111 +59,103 @@ impl PositionDb {
     ret
   }
 
-  /// Returns the `Position` for this `TextSize`, or `None` if it is out of bounds.
+  /// Returns the `PositionUtf16` for this `TextSize`, or `None` if it is out of bounds.
   ///
   /// # Panics
   ///
   /// Upon internal error.
   #[must_use]
-  pub fn position(&self, text_size: TextSize) -> Option<PositionUtf8> {
+  pub fn position_utf16(&self, text_size: TextSize) -> Option<PositionUtf16> {
+    self.position_utf8(text_size).map(|x| self.position_to_utf16(x))
+  }
+
+  /// Returns the `TextSize` for this `PositionUtf16`, or `None` if it is out of bounds.
+  ///
+  /// # Panics
+  ///
+  /// Upon internal error.
+  #[must_use]
+  pub fn text_size_utf16(&self, pos: PositionUtf16) -> Option<TextSize> {
+    self.text_size_utf8(self.position_to_utf8(pos))
+  }
+
+  /// Returns the `RangeUtf16` for this `TextRange`, or `None` if it is out of bounds.
+  ///
+  /// # Panics
+  ///
+  /// Upon internal error.
+  #[must_use]
+  pub fn range_utf16(&self, text_range: TextRange) -> Option<RangeUtf16> {
+    self.range_utf8(text_range).map(|x| self.range_to_utf16(x))
+  }
+
+  /// Returns the `TextRange` for this `RangeUtf16`, or `None` if it is out of bounds.
+  ///
+  /// # Panics
+  ///
+  /// Upon internal error.
+  #[must_use]
+  pub fn text_range_utf16(&self, range: RangeUtf16) -> Option<TextRange> {
+    self.text_range_utf8(self.range_to_utf8(range))
+  }
+
+  fn position_utf8(&self, text_size: TextSize) -> Option<PositionUtf8> {
     let line = self.newlines.partition_point(|&it| it <= text_size).checked_sub(1)?;
     let col = text_size - self.newlines.get(line)?;
     Some(PositionUtf8 { line: line.try_into().unwrap(), col: col.into() })
   }
 
-  /// Returns the `TextSize` for this `Position`, or `None` if it is out of bounds.
-  ///
-  /// # Panics
-  ///
-  /// Upon internal error.
-  #[must_use]
-  pub fn text_size(&self, pos: PositionUtf8) -> Option<TextSize> {
+  fn text_size_utf8(&self, pos: PositionUtf8) -> Option<TextSize> {
     self
       .newlines
       .get(usize::try_from(pos.line).unwrap())
       .map(|text_size| text_size + TextSize::from(pos.col))
   }
 
-  /// Returns the `Range` for this `TextRange`, or `None` if it is out of bounds.
-  ///
-  /// # Panics
-  ///
-  /// Upon internal error.
-  #[must_use]
-  pub fn range(&self, text_range: TextRange) -> Option<RangeUtf8> {
+  fn range_utf8(&self, text_range: TextRange) -> Option<RangeUtf8> {
     Some(RangeUtf8 {
-      start: self.position(text_range.start())?,
-      end: self.position(text_range.end())?,
+      start: self.position_utf8(text_range.start())?,
+      end: self.position_utf8(text_range.end())?,
     })
   }
 
-  /// Returns the `TextRange` for this `Range`, or `None` if it is out of bounds.
-  ///
-  /// # Panics
-  ///
-  /// Upon internal error.
-  #[must_use]
-  pub fn text_range(&self, range: RangeUtf8) -> Option<TextRange> {
-    Some(TextRange::new(self.text_size(range.start)?, self.text_size(range.end)?))
+  fn text_range_utf8(&self, range: RangeUtf8) -> Option<TextRange> {
+    Some(TextRange::new(self.text_size_utf8(range.start)?, self.text_size_utf8(range.end)?))
   }
 
-  /// Converts a `Position` (which is always for UTF-8) to a `PositionUtf16`.
-  ///
-  /// # Panics
-  ///
-  /// Upon internal error.
-  #[must_use]
-  pub fn to_position_utf16(&self, pos: PositionUtf8) -> PositionUtf16 {
-    let col = self.to_utf16_col(pos.line, pos.col.into());
+  fn position_to_utf16(&self, pos: PositionUtf8) -> PositionUtf16 {
+    let col = self.col_to_utf16(pos.line, pos.col.into());
     PositionUtf16 { line: pos.line, col: col.try_into().unwrap() }
   }
 
-  /// Converts a `PositionUtf16` to a `Position` (which is always for UTF-8).
-  ///
-  /// # Panics
-  ///
-  /// Upon internal error.
-  #[must_use]
-  pub fn to_position_utf8(&self, pos: PositionUtf16) -> PositionUtf8 {
-    let col = self.to_utf8_col(pos.line, pos.col);
+  fn position_to_utf8(&self, pos: PositionUtf16) -> PositionUtf8 {
+    let col = self.col_to_utf8(pos.line, pos.col);
     PositionUtf8 { line: pos.line, col: col.into() }
   }
 
-  /// Converts a `Range` (which is always for UTF-8) to a `RangeUtf16`.
-  ///
-  /// # Panics
-  ///
-  /// Upon internal error.
-  #[must_use]
-  pub fn to_range_utf16(&self, range: RangeUtf8) -> RangeUtf16 {
+  fn range_to_utf16(&self, range: RangeUtf8) -> RangeUtf16 {
     RangeUtf16 {
-      start: self.to_position_utf16(range.start),
-      end: self.to_position_utf16(range.end),
+      start: self.position_to_utf16(range.start),
+      end: self.position_to_utf16(range.end),
     }
   }
 
-  /// Converts a `RangeUtf16` to a `Range` (which is always for UTF-8).
-  ///
-  /// # Panics
-  ///
-  /// Upon internal error.
-  #[must_use]
-  pub fn to_range_utf8(&self, range: RangeUtf16) -> RangeUtf8 {
-    RangeUtf8 { start: self.to_position_utf8(range.start), end: self.to_position_utf8(range.end) }
+  fn range_to_utf8(&self, range: RangeUtf16) -> RangeUtf8 {
+    RangeUtf8 { start: self.position_to_utf8(range.start), end: self.position_to_utf8(range.end) }
   }
 
   /// Returns an iterator over the lines in the range.
   pub fn lines(&self, range: TextRange) -> impl Iterator<Item = TextRange> + '_ {
     let lo = self.newlines.partition_point(|&it| it < range.start());
     let hi = self.newlines.partition_point(|&it| it <= range.end());
-    let all = iter::once(range.start())
+    let all = std::iter::once(range.start())
       .chain(self.newlines[lo..hi].iter().copied())
-      .chain(iter::once(range.end()));
+      .chain(std::iter::once(range.end()));
 
     all.clone().zip(all.skip(1)).map(|(lo, hi)| TextRange::new(lo, hi)).filter(|it| !it.is_empty())
   }
 
-  fn to_utf16_col(&self, line: u32, col: TextSize) -> usize {
+  fn col_to_utf16(&self, line: u32, col: TextSize) -> usize {
     let mut res: usize = col.into();
     if let Some(utf16_chars) = self.utf16_lines.get(&line) {
       for c in utf16_chars {
@@ -180,7 +171,7 @@ impl PositionDb {
     res
   }
 
-  fn to_utf8_col(&self, line: u32, mut col: u32) -> TextSize {
+  fn col_to_utf8(&self, line: u32, mut col: u32) -> TextSize {
     if let Some(utf16_chars) = self.utf16_lines.get(&line) {
       for c in utf16_chars {
         if col > u32::from(c.start) {
@@ -207,8 +198,9 @@ impl PositionDb {
   ///
   /// Upon internal error.
   #[must_use]
-  pub fn end_position(&self) -> PositionUtf8 {
-    self.position(self.len()).expect("len is in range")
+  pub fn end_position_utf16(&self) -> PositionUtf16 {
+    let pos = self.position_utf8(self.len()).expect("len is in range");
+    self.position_to_utf16(pos)
   }
 }
 
