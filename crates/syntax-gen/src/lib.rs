@@ -205,7 +205,7 @@ where
     impl fmt::Display for SyntaxKind {
       fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.token_desc() {
-          None => write!(f, "{:?}", self),
+          None => fmt::Debug::fmt(self, f),
           Some(s) => f.write_str(s),
         }
       }
