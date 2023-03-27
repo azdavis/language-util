@@ -20,9 +20,16 @@ impl Name {
   where
     S: Into<SmolStr>,
   {
+    Self::try_new(s).expect("empty string for Name")
+  }
+
+  /// Returns a new `Name`, or `None` if `s` was empty.
+  pub fn try_new<S>(s: S) -> Option<Self>
+  where
+    S: Into<SmolStr>,
+  {
     let s: SmolStr = s.into();
-    assert!(!s.is_empty());
-    Self(s)
+    (!s.is_empty()).then(|| Self(s))
   }
 
   /// Returns this as a string slice.
