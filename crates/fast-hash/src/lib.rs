@@ -4,7 +4,7 @@
 
 use std::hash::{BuildHasherDefault, Hash};
 
-pub use rustc_hash::{FxHashMap, FxHashSet};
+pub use rustc_hash::{FxHashMap, FxHashSet, FxHasher};
 
 /// Returns a map with the given capacity.
 pub fn map_with_capacity<K, V>(cap: usize) -> FxHashMap<K, V> {
