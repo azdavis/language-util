@@ -8,6 +8,3 @@ publish = false
 [lib]
 test = false
 doctest = false
-
-[dependencies]
-text-pos = { path = "../text-pos" }
