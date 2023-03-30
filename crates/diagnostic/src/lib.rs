@@ -4,20 +4,20 @@
 
 use std::fmt;
 
-/// An error.
+/// A diagnostic.
 #[derive(Debug)]
 pub struct Diagnostic {
-  /// The range of the error.
+  /// The range of the diagnostic.
   pub range: text_pos::RangeUtf16,
-  /// The message of the error.
+  /// The message of the diagnostic.
   pub message: String,
-  /// The error code.
+  /// The diagnostic code.
   pub code: Code,
   /// The severity.
   pub severity: Severity,
 }
 
-/// The severity of this error.
+/// The severity of this diagnostic.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Severity {
   /// Warning. Should probably address.
@@ -26,7 +26,7 @@ pub enum Severity {
   Error,
 }
 
-/// An error code.
+/// A diagnostic code.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Code(u16);
 

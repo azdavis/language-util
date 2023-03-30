@@ -76,9 +76,9 @@ A wrapper around the `text-size` crate to add some helpers, primarily `WithRange
 
 A small utility crate for formatting.
 
-## `diagnostic-util`
+## `diagnostic`
 
-A small crate defining primarily the overall `Error` type, which a language server reports to a client.
+A small crate defining primarily the overall `Diagnostic` type, which a language server reports to a client.
 
 ## `fast-hash`
 
