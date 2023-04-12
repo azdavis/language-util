@@ -2,5 +2,13 @@
   "files.exclude": {
     "target": true
   },
-  "rust-analyzer.checkOnSave.command": "clippy"
+  "rust-analyzer.checkOnSave.command": "clippy",
+  "cSpell.words": [
+    "clippy",
+    "dtolnay",
+    "RUSTFLAGS",
+    "rustfmt",
+    "Swatinem",
+    "Triviable"
+  ]
 }

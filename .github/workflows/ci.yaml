@@ -1,33 +1,30 @@
 name: ci
 on:
-  pull_request:
+  pull_request: null
   push:
-    branches: [master]
-
+    branches: [main]
 env:
   CARGO_INCREMENTAL: 0
-  CARGO_NET_RETRY: 10
   CI: 1
   RUST_BACKTRACE: short
-  RUSTFLAGS: -D warnings
-  RUSTUP_MAX_RETRIES: 10
-
+  RUSTFLAGS: "-D warnings"
 jobs:
   test:
-    name: test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        # FIXME windows-latest weirdly times out
-        os: [macos-latest, ubuntu-latest]
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Check out repo
+        uses: actions/checkout@v3
+      - name: Set up rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          fetch-depth: 0
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
           components: rustfmt, clippy
-          override: true
-      - run: cargo xtask ci
+      - name: Cache rust
+        uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build
+      - name: Check formatting
+        run: cargo fmt -- --check
+      - name: Run clippy
+        run: cargo clippy
+      - name: Test
+        run: cargo test
