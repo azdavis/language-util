@@ -207,9 +207,13 @@ where
       if !tok.kind.is_trivia() {
         break;
       }
-      sink.token(tok);
-      self.tok_idx += 1;
+      self.token(sink, tok);
     }
+  }
+
+  fn token(&mut self, sink: &mut dyn Sink<K, E>, tok: Token<'a, K>) {
+    sink.token(tok);
+    self.tok_idx += 1;
   }
 
   /// Finishes parsing, and writes the parsed tree into the `sink`.
@@ -256,8 +260,7 @@ where
         }
         Event::Token => {
           self.eat_trivia(sink);
-          sink.token(self.tokens[self.tok_idx]);
-          self.tok_idx += 1;
+          self.token(sink, self.tokens[self.tok_idx]);
         }
         Event::Error(expected) => sink.error(expected),
       }
