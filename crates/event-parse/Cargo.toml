@@ -12,7 +12,7 @@ test = false
 [dependencies]
 drop_bomb = "0.1"
 token = { path = "../token" }
-rowan = { git = "https://github.com/azdavis/rowan.git", optional = true }
+rowan = { version = "0.15", optional = true }
 
 [features]
 default = ["rowan"]
