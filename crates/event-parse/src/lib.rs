@@ -202,22 +202,27 @@ where
     self.events.push(Some(Event::Error(error)))
   }
 
-  fn eat_trivia(&mut self, sink: &mut dyn Sink<K, E>) {
+  fn eat_trivia(&mut self, to_enter: &mut Vec<K>, sink: &mut dyn Sink<K, E>) {
     while let Some(&tok) = self.tokens.get(self.tok_idx) {
       if !tok.kind.is_trivia() {
         break;
       }
-      self.token(sink, tok);
+      self.token(to_enter, sink, tok);
     }
   }
 
-  fn token(&mut self, sink: &mut dyn Sink<K, E>, tok: Token<'a, K>) {
+  fn token(&mut self, to_enter: &mut Vec<K>, sink: &mut dyn Sink<K, E>, tok: Token<'a, K>) {
+    for kind in to_enter.drain(..) {
+      sink.enter(kind);
+    }
     sink.token(tok);
     self.tok_idx += 1;
   }
 
   /// Finishes parsing, and writes the parsed tree into the `sink`.
   pub fn finish(mut self, sink: &mut dyn Sink<K, E>) {
+    let mut to_enter = Vec::<K>::new();
+    let mut fst = None::<K>;
     self.tok_idx = 0;
     let mut kinds = Vec::new();
     let mut levels: usize = 0;
@@ -229,6 +234,9 @@ where
       match ev {
         Event::Enter(kind, mut parent) => {
           assert!(kinds.is_empty());
+          if fst.is_none() {
+            fst = Some(kind);
+          }
           kinds.push(kind);
           while let Some(p) = parent {
             match self.events[p].take() {
@@ -244,28 +252,37 @@ where
           for kind in kinds.drain(..).rev() {
             // keep as much trivia as possible outside of what we're entering.
             if levels != 0 {
-              self.eat_trivia(sink);
+              self.eat_trivia(&mut to_enter, sink);
             }
-            sink.enter(kind);
+            to_enter.push(kind);
             levels += 1;
           }
         }
         Event::Exit => {
-          sink.exit();
+          if to_enter.pop().is_none() {
+            sink.exit();
+          }
           levels -= 1;
           // keep as much trivia as possible outside of top-level items.
           if levels == 1 {
-            self.eat_trivia(sink);
+            self.eat_trivia(&mut to_enter, sink);
           }
         }
         Event::Token => {
-          self.eat_trivia(sink);
-          self.token(sink, self.tokens[self.tok_idx]);
+          self.eat_trivia(&mut to_enter, sink);
+          self.token(&mut to_enter, sink, self.tokens[self.tok_idx]);
         }
         Event::Error(expected) => sink.error(expected),
       }
     }
     assert_eq!(levels, 0);
+    // give an empty node for the empty parse
+    if self.tok_idx == 0 {
+      if let Some(fst) = fst {
+        sink.enter(fst);
+        sink.exit();
+      }
+    }
   }
 }
 
