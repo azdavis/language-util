@@ -10,17 +10,17 @@ use fast_hash::FxHashSet;
 /// `lang` returned an error.
 ///
 /// This should never panic. It's a bug if this panics.
-pub fn check<L: Lang>(lang: &L, pats: Vec<Pat<L>>, ty: L::Ty) -> Result<Check<L>> {
+pub fn check<L: Lang>(cx: &mut L::Cx<'_>, pats: Vec<Pat<L>>, ty: L::Ty) -> Result<Check<L>> {
   let mut ac = FxHashSet::default();
   for pat in pats.iter() {
     get_pat_indices(&mut ac, pat);
   }
   let mut mtx = Matrix::<L>::default();
   for pat in pats {
-    useful(lang, &mut ac, 0, &mtx, vec![(pat.clone(), ty.clone())])?;
+    useful(cx, &mut ac, 0, &mtx, vec![(pat.clone(), ty.clone())])?;
     mtx.push(vec![pat]);
   }
-  let missing: Vec<_> = useful(lang, &mut ac, 0, &mtx, vec![(Pat::any_no_idx(lang), ty)])?
+  let missing: Vec<_> = useful(cx, &mut ac, 0, &mtx, vec![(Pat::any_no_idx(), ty)])?
     .witnesses
     .into_iter()
     .map(|mut w| {
@@ -73,7 +73,7 @@ type TypedPatVec<L> = Vec<(Pat<L>, <L as Lang>::Ty)>;
 
 /// Returns whether the pattern stack is useful for this matrix.
 fn useful<L: Lang>(
-  lang: &L,
+  cx: &mut L::Cx<'_>,
   ac: &mut FxHashSet<L::PatIdx>,
   depth: usize,
   mtx: &Matrix<L>,
@@ -96,27 +96,27 @@ fn useful<L: Lang>(
       for pat in or_pats {
         let mut val = val.clone();
         val.push((pat, ty.clone()));
-        ret.extend(useful(lang, ac, depth + 1, &m, val.clone())?);
+        ret.extend(useful(cx, ac, depth + 1, &m, val.clone())?);
         m.push(val.into_iter().map(|(x, _)| x).collect());
       }
     }
     RawPat::Con(con_pat) => {
       let last_col = mtx.non_empty_rows().map(|r| &r.con_pat.con);
-      for con in lang.split(&ty, &con_pat.con, last_col, depth)? {
+      for con in L::split(cx, &ty, &con_pat.con, last_col, depth)? {
         let mut m = Matrix::<L>::default();
         for row in mtx.non_empty_rows() {
-          let new = specialize(lang, &ty, &row.con_pat, &con)?;
+          let new = specialize(cx, &ty, &row.con_pat, &con)?;
           if let Some(new) = new {
             let mut pats = row.pats.clone();
             pats.extend(new.into_iter().map(|(x, _)| x));
             m.push(pats);
           }
         }
-        let new = specialize(lang, &ty, &con_pat, &con)?.expect("p_con must cover itself");
+        let new = specialize(cx, &ty, &con_pat, &con)?.expect("p_con must cover itself");
         let new_len = new.len();
         let mut val = val.clone();
         val.extend(new);
-        let mut u = useful(lang, ac, depth + 1, &m, val)?;
+        let mut u = useful(cx, ac, depth + 1, &m, val)?;
         for w in u.witnesses.iter_mut() {
           let args: Vec<_> = w.drain(w.len() - new_len..).rev().collect();
           w.push(Pat::con_(con.clone(), args, idx));
@@ -137,26 +137,26 @@ fn useful<L: Lang>(
 ///
 /// The pat has type `ty` and is specialized with the given other value constructor `con`.
 fn specialize<L: Lang>(
-  lang: &L,
+  cx: &mut L::Cx<'_>,
   ty: &L::Ty,
   pat: &ConPat<L>,
   val_con: &L::Con,
 ) -> Result<Option<TypedPatVec<L>>> {
-  let ret = if lang.covers(&pat.con, &lang.any()) {
+  let ret = if L::covers(&pat.con, &L::any()) {
     if !pat.args.is_empty() {
       return Err(CheckError);
     }
-    let tys = lang.get_arg_tys(ty, val_con)?;
-    let ret: Vec<_> = tys.into_iter().map(|t| (Pat::any_no_idx(lang), t)).rev().collect();
+    let tys = L::get_arg_tys(cx, ty, val_con)?;
+    let ret: Vec<_> = tys.into_iter().map(|t| (Pat::any_no_idx(), t)).rev().collect();
     Some(ret)
-  } else if lang.covers(&pat.con, val_con) {
-    let tys = lang.get_arg_tys(ty, val_con)?;
+  } else if L::covers(&pat.con, val_con) {
+    let tys = L::get_arg_tys(cx, ty, val_con)?;
     if tys.len() < pat.args.len() {
       return Err(CheckError);
     }
     // the `>` case can happen in the case of e.g. record patterns with missing labels.
     let mut ret: Vec<_> =
-      pat.args.iter().cloned().chain(std::iter::repeat(Pat::any_no_idx(lang))).zip(tys).collect();
+      pat.args.iter().cloned().chain(std::iter::repeat(Pat::any_no_idx())).zip(tys).collect();
     ret.reverse();
     Some(ret)
   } else {
