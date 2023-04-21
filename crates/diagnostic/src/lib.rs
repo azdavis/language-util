@@ -13,6 +13,15 @@ pub enum Severity {
   Error,
 }
 
+impl fmt::Display for Severity {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      Severity::Warning => f.write_str("warning"),
+      Severity::Error => f.write_str("error"),
+    }
+  }
+}
+
 /// A diagnostic code.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Code(u16);
