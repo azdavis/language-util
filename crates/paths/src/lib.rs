@@ -53,6 +53,8 @@ impl PathId {
   }
 }
 
+impl nohash_hasher::IsEnabled for PathId {}
+
 /// A pair of path id and value.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WithPath<T> {
@@ -63,7 +65,7 @@ pub struct WithPath<T> {
 }
 
 /// A map from paths to something.
-pub type PathMap<T> = FxHashMap<PathId, T>;
+pub type PathMap<T> = nohash_hasher::IntMap<PathId, T>;
 
 /// A canonical (and therefore absolute) path buffer.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

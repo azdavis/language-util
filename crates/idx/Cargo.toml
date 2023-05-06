@@ -8,3 +8,6 @@ publish = false
 [lib]
 test = false
 doctest = false
+
+[dependencies]
+nohash-hasher = "0.2"

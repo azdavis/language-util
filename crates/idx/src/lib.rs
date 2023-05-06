@@ -25,3 +25,5 @@ impl Idx {
     self.0.try_into().expect("couldn't convert from Idx")
   }
 }
+
+impl nohash_hasher::IsEnabled for Idx {}

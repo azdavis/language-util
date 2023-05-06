@@ -6,7 +6,10 @@
   "cSpell.words": [
     "clippy",
     "dtolnay",
+    "hasher",
     "Maranget",
+    "newtype",
+    "nohash",
     "rustc",
     "RUSTFLAGS",
     "rustfmt",
