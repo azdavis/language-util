@@ -11,4 +11,4 @@ test = false
 
 [dependencies]
 fast-hash = { path = "../fast-hash" }
-url = "2"
+url = "2.4.0"

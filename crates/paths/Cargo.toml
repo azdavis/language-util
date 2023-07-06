@@ -13,5 +13,5 @@ doctest = false
 fast-hash = { path = "../fast-hash" }
 nohash-hasher = "0.2"
 idx = { path = "../idx" }
-glob = "0.3"
+glob = "0.3.1"
 str-util = { path = "../str-util" }

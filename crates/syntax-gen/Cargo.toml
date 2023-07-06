@@ -9,8 +9,8 @@ publish = false
 test = false
 
 [dependencies]
-proc-macro2 = "1"
-quote = "1"
+proc-macro2 = "1.0.63"
+quote = "1.0.29"
 fast-hash = { path = "../fast-hash" }
-ungrammar = "1"
+ungrammar = "1.16.1"
 identifier-case = { path = "../identifier-case" }

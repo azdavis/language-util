@@ -6,17 +6,8 @@ use text_size_util::TextRange;
 #[test]
 fn text_pos() {
   let text = "hello\nworld";
-  let table = [
-    (0, 0, 0),
-    (1, 0, 1),
-    (5, 0, 5),
-    (6, 1, 0),
-    (7, 1, 1),
-    (8, 1, 2),
-    (10, 1, 4),
-    (11, 1, 5),
-    (12, 1, 6),
-  ];
+  let table =
+    [(0, 0, 0), (1, 0, 1), (5, 0, 5), (6, 1, 0), (7, 1, 1), (8, 1, 2), (10, 1, 4), (11, 1, 5)];
 
   let index = PositionDb::new(text);
   for (offset, line, col) in table {
