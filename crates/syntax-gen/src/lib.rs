@@ -46,16 +46,12 @@ pub use token::{Token, TokenKind};
 /// Returns `Err` if the files could not be written. Panics if certain
 /// properties about `grammar` do not hold. (Read the source/panic messages to
 /// find out what they are.)
-pub fn gen<F>(
-  out_dir: &std::path::Path,
-  lang: &str,
-  trivia: &[&str],
-  grammar: Grammar,
-  get_token: F,
-) -> std::io::Result<()>
+pub fn gen<F>(lang: &str, trivia: &[&str], grammar: Grammar, get_token: F) -> std::io::Result<()>
 where
   F: Fn(&str) -> (TokenKind, Token),
 {
+  let out_dir = std::env::var_os("OUT_DIR").expect("OUT_DIR should be set");
+  let out_dir = std::path::Path::new(&out_dir);
   let lang = token::ident(lang);
   let tokens = token::TokenDb::new(&grammar, get_token);
   let mut types = Vec::<proc_macro2::TokenStream>::new();
