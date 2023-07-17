@@ -34,19 +34,19 @@ pub use token::{Token, TokenKind};
 /// - `rowan` from crates.io
 /// - `token` from language-util
 ///
-/// The files will be formatted with rustfmt.
+/// The files will be formatted with rustfmt if it is available.
 ///
-/// `src/kind.rs` will contain definitions for the language's `SyntaxKind` and
+/// `kind.rs` will contain definitions for the language's `SyntaxKind` and
 /// associated types, using all the different tokens extracted from `grammar`
 /// and processed with `get_token`.
 ///
-/// `src/ast.rs` will contain a strongly-typed API for traversing a syntax tree
+/// `ast.rs` will contain a strongly-typed API for traversing a syntax tree
 /// for `lang`, based on the `grammar`.
 ///
-/// Returns `Err` if the files could not be written. Panics if certain
-/// properties about `grammar` do not hold. (Read the source/panic messages to
-/// find out what they are.)
-pub fn gen<F>(lang: &str, trivia: &[&str], grammar: Grammar, get_token: F) -> std::io::Result<()>
+/// # Panics
+///
+/// If this process failed.
+pub fn gen<F>(lang: &str, trivia: &[&str], grammar: Grammar, get_token: F)
 where
   F: Fn(&str) -> (TokenKind, Token),
 {
@@ -83,9 +83,10 @@ where
     types.push(seq::get(&cx, name, rules));
   }
   let ast_rs = ast::get(&cx.lang, types);
-  util::write_rust_file(out_dir.join("ast.rs").as_path(), ast_rs.to_string().as_str())?;
+  util::write_rust_file(out_dir.join("ast.rs").as_path(), ast_rs.to_string().as_str())
+    .expect("couldn't write ast.rs");
   let trivia: Vec<_> = trivia.iter().map(|&x| token::ident(x)).collect();
   let kind_rs = kind::get(cx, trivia, node_syntax_kinds);
-  util::write_rust_file(out_dir.join("kind.rs").as_path(), kind_rs.to_string().as_str())?;
-  Ok(())
+  util::write_rust_file(out_dir.join("kind.rs").as_path(), kind_rs.to_string().as_str())
+    .expect("couldn't write kind.rs");
 }
