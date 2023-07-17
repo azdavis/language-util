@@ -10,6 +10,7 @@ mod kind;
 mod seq;
 mod token;
 mod util;
+mod write;
 
 use crate::util::Cx;
 use fast_hash::FxHashSet;
@@ -83,10 +84,10 @@ where
     types.push(seq::get(&cx, name, rules));
   }
   let ast_rs = ast::get(&cx.lang, types);
-  util::write_rust_file(out_dir.join("ast.rs").as_path(), ast_rs.to_string().as_str())
+  write::rust(out_dir.join("ast.rs").as_path(), ast_rs.to_string().as_str())
     .expect("couldn't write ast.rs");
   let trivia: Vec<_> = trivia.iter().map(|&x| token::ident(x)).collect();
   let kind_rs = kind::get(cx, trivia, node_syntax_kinds);
-  util::write_rust_file(out_dir.join("kind.rs").as_path(), kind_rs.to_string().as_str())
+  write::rust(out_dir.join("kind.rs").as_path(), kind_rs.to_string().as_str())
     .expect("couldn't write kind.rs");
 }
