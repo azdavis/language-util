@@ -13,22 +13,19 @@ mod util;
 mod write;
 
 use crate::util::Cx;
-use fast_hash::FxHashSet;
+use fast_hash::{FxHashMap, FxHashSet};
 use ungrammar::{Grammar, Rule};
 
 pub use token::{Token, TokenKind};
 
-/// Generates Rust code from the `grammar` of the `lang` and writes it to
-/// `OUT_DIR/kind.rs` and `OUT_DIR/ast.rs`.
+/// Generates Rust code from the `grammar` of the `lang` and writes it to `$OUT_DIR/kind.rs` and
+/// `$OUT_DIR/ast.rs`.
 ///
-/// `lang` is the name of the language, `trivia` is a list of all the
-/// `SyntaxKind`s which should be made as trivia, and `grammar` is the grammar
-/// for the language.
-///
-/// `get_token` will be called once for each token in `grammar`, and should
-/// return a tuple `(kind, name)`, where `kind` is what kind of token this is (a
-/// [`TokenKind`]) and `name` is the name of the token, to be used as an enum
-/// variant in the generated `SyntaxKind`.
+/// - `lang` is the name of the language.
+/// - `trivia` is a list of all the `SyntaxKind`s which should be made as trivia.
+/// - `grammar` is the ungrammar for the language.
+/// - `doc` is a map from tokens to docs.
+/// - `special` is a map from special tokens to descriptions for those tokens.
 ///
 /// The generated Rust files will depend on:
 ///
@@ -37,25 +34,26 @@ pub use token::{Token, TokenKind};
 ///
 /// The files will be formatted with rustfmt if it is available.
 ///
-/// `kind.rs` will contain definitions for the language's `SyntaxKind` and
-/// associated types, using all the different tokens extracted from `grammar`
-/// and processed with `get_token`.
-///
-/// `ast.rs` will contain a strongly-typed API for traversing a syntax tree
-/// for `lang`, based on the `grammar`.
+/// - `kind.rs` will contain definitions for the language's `SyntaxKind` and associated types, using
+///   all the different tokens extracted from `grammar` and processed with `get_token`.
+/// - `ast.rs` will contain a strongly-typed API for traversing a syntax tree for `lang`, based on
+///   the `grammar`.
 ///
 /// # Panics
 ///
 /// If this process failed.
-pub fn gen<F>(lang: &str, trivia: &[&str], grammar: &str, get_token: F)
-where
-  F: Fn(&str) -> (TokenKind, Token),
-{
+pub fn gen(
+  lang: &str,
+  trivia: &[&str],
+  grammar: &str,
+  doc: &FxHashMap<&str, &str>,
+  special: &FxHashMap<&str, &str>,
+) {
   let out_dir = std::env::var_os("OUT_DIR").expect("OUT_DIR should be set");
   let out_dir = std::path::Path::new(&out_dir);
   let lang = token::ident(lang);
   let grammar: Grammar = grammar.parse().expect("couldn't parse ungrammar");
-  let tokens = token::TokenDb::new(&grammar, get_token);
+  let tokens = token::TokenDb::new(&grammar, doc, special);
   let mut types = Vec::<proc_macro2::TokenStream>::new();
   let mut node_syntax_kinds = Vec::<proc_macro2::Ident>::new();
   let mut cx = Cx { lang, grammar, tokens, token_alts: FxHashSet::default() };
@@ -69,8 +67,8 @@ where
     };
     types.push(alt::get(&cx, &mut token_alts, token::ident(&data.name), rules));
   }
-  // it would be nicer if we could just mutate token_alts on the cx but we have
-  // an active shared borrow to iterate over the grammar. so we use a kludge.
+  // it would be nicer if we could just mutate token_alts on the cx but we have an active shared
+  // borrow to iterate over the grammar. so we use a kludge.
   cx.token_alts = token_alts;
   // then everything else
   for node in cx.grammar.iter() {

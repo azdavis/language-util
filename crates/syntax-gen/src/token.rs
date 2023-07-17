@@ -36,15 +36,35 @@ impl Token {
 }
 
 impl TokenDb {
-  pub(crate) fn new<F>(grammar: &ungrammar::Grammar, get_token: F) -> Self
-  where
-    F: Fn(&str) -> (TokenKind, Token),
-  {
+  pub(crate) fn new(
+    grammar: &ungrammar::Grammar,
+    doc: &FxHashMap<&str, &str>,
+    special_desc: &FxHashMap<&str, &str>,
+  ) -> Self {
     let mut punctuation = FxHashMap::default();
     let mut keywords = FxHashMap::default();
     let mut special = FxHashMap::default();
     for token in grammar.tokens() {
-      let (kind, tok) = get_token(grammar[token].name.as_ref());
+      let orig_name = grammar[token].name.as_str();
+      let kind: TokenKind;
+      let mut name: String;
+      let mut desc = None::<String>;
+      if let Some(&d) = special_desc.get(orig_name) {
+        kind = TokenKind::Special;
+        name = orig_name.to_owned();
+        desc = Some(d.to_owned());
+      } else if orig_name.chars().any(|c| c.is_ascii_alphabetic()) {
+        kind = TokenKind::Keyword;
+        name = identifier_case::snake_to_pascal(orig_name);
+        name.push_str("Kw");
+      } else {
+        kind = TokenKind::Punctuation;
+        name = String::new();
+        for c in orig_name.chars() {
+          name.push_str(char_name::get(c));
+        }
+      }
+      let tok = Token { name, desc, doc: doc.get(orig_name).map(|&x| x.to_owned()) };
       match kind {
         TokenKind::Punctuation => {
           assert!(punctuation.insert(token, tok).is_none())
