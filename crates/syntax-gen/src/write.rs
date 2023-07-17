@@ -10,7 +10,9 @@ pub(crate) fn rust(name: &std::path::Path, contents: &str) -> Result<()> {
       let mut out_file = OpenOptions::new().write(true).create(true).truncate(true).open(name)?;
       prog.stdin.take().unwrap().write_all(contents.as_bytes())?;
       std::io::copy(&mut stdout, &mut out_file)?;
-      assert!(prog.wait()?.success());
+      if !prog.wait()?.success() {
+        return Err(std::io::ErrorKind::Other.into());
+      }
     }
     Err(_) => {
       // ignore. probably, rustfmt isn't available. just write the file
