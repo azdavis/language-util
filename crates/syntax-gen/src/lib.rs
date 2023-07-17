@@ -47,13 +47,14 @@ pub use token::{Token, TokenKind};
 /// # Panics
 ///
 /// If this process failed.
-pub fn gen<F>(lang: &str, trivia: &[&str], grammar: Grammar, get_token: F)
+pub fn gen<F>(lang: &str, trivia: &[&str], grammar: &str, get_token: F)
 where
   F: Fn(&str) -> (TokenKind, Token),
 {
   let out_dir = std::env::var_os("OUT_DIR").expect("OUT_DIR should be set");
   let out_dir = std::path::Path::new(&out_dir);
   let lang = token::ident(lang);
+  let grammar: Grammar = grammar.parse().expect("couldn't parse ungrammar");
   let tokens = token::TokenDb::new(&grammar, get_token);
   let mut types = Vec::<proc_macro2::TokenStream>::new();
   let mut node_syntax_kinds = Vec::<proc_macro2::Ident>::new();
