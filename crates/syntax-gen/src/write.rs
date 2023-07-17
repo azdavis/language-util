@@ -15,8 +15,7 @@ pub(crate) fn rust(name: &std::path::Path, contents: &str) -> Result<()> {
       }
     }
     Err(_) => {
-      // ignore. probably, rustfmt isn't available. just write the file
-      // unformatted.
+      // ignore. probably, rustfmt isn't available. just write the file unformatted.
       std::fs::write(name, contents)?;
     }
   }
