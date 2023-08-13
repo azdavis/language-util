@@ -39,7 +39,7 @@ impl<L: Lang> fmt::Debug for Check<L> {
 /// The language we do pattern matching on.
 pub trait Lang {
   /// A context for doing stuff.
-  type Cx<'a>;
+  type Cx;
 
   /// A pattern identifier.
   type PatIdx: Debug + Copy + Eq + Hash;
@@ -62,7 +62,7 @@ pub trait Lang {
   /// `depth` is the depth of this split, starting at 0. Implementations may wish to return fewer
   /// constructors at higher depths, but this is not required.
   fn split<'a, I>(
-    cx: &mut Self::Cx<'_>,
+    cx: &mut Self::Cx,
     ty: &Self::Ty,
     con: &Self::Con,
     cons: I,
@@ -74,7 +74,7 @@ pub trait Lang {
 
   /// Returns the types of the arguments to a constructor pattern with the given
   /// type `ty` and constructor `con`.
-  fn get_arg_tys(cx: &mut Self::Cx<'_>, ty: &Self::Ty, con: &Self::Con) -> Result<Vec<Self::Ty>>;
+  fn get_arg_tys(cx: &mut Self::Cx, ty: &Self::Ty, con: &Self::Con) -> Result<Vec<Self::Ty>>;
 
   /// Returns whether `lhs` covers `rhs`. Sometimes this is as simple as returning `lhs == rhs`.
   fn covers(lhs: &Self::Con, rhs: &Self::Con) -> bool;

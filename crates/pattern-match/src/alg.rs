@@ -10,7 +10,7 @@ use fast_hash::FxHashSet;
 /// `lang` returned an error.
 ///
 /// This should never panic. It's a bug if this panics.
-pub fn check<L: Lang>(cx: &mut L::Cx<'_>, pats: Vec<Pat<L>>, ty: L::Ty) -> Result<Check<L>> {
+pub fn check<L: Lang>(cx: &mut L::Cx, pats: Vec<Pat<L>>, ty: L::Ty) -> Result<Check<L>> {
   let mut ac = FxHashSet::default();
   for pat in pats.iter() {
     get_pat_indices(&mut ac, pat);
@@ -73,7 +73,7 @@ type TypedPatVec<L> = Vec<(Pat<L>, <L as Lang>::Ty)>;
 
 /// Returns whether the pattern stack is useful for this matrix.
 fn useful<L: Lang>(
-  cx: &mut L::Cx<'_>,
+  cx: &mut L::Cx,
   ac: &mut FxHashSet<L::PatIdx>,
   depth: usize,
   mtx: &Matrix<L>,
@@ -137,7 +137,7 @@ fn useful<L: Lang>(
 ///
 /// The pat has type `ty` and is specialized with the given other value constructor `con`.
 fn specialize<L: Lang>(
-  cx: &mut L::Cx<'_>,
+  cx: &mut L::Cx,
   ty: &L::Ty,
   pat: &ConPat<L>,
   val_con: &L::Con,
