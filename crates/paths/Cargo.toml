@@ -10,8 +10,9 @@ test = false
 doctest = false
 
 [dependencies]
-fast-hash = { path = "../fast-hash" }
-nohash-hasher = "0.2"
-idx = { path = "../idx" }
 glob = "0.3.1"
+nohash-hasher = "0.2"
+
+fast-hash = { path = "../fast-hash" }
+idx = { path = "../idx" }
 str-util = { path = "../str-util" }

@@ -11,8 +11,9 @@ test = false
 
 [dependencies]
 drop_bomb = "0.1.5"
-token = { path = "../token" }
 rowan = { version = "0.15.11", optional = true }
+
+token = { path = "../token" }
 
 [features]
 default = ["rowan"]

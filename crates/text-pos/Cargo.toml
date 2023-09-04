@@ -9,5 +9,6 @@ publish = false
 doctest = false
 
 [dependencies]
-text-size-util = { path = "../text-size-util" }
 line-index = "=0.1.0-pre.1"
+
+text-size-util = { path = "../text-size-util" }

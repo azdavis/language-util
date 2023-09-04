@@ -10,5 +10,6 @@ doctest = false
 test = false
 
 [dependencies]
-fast-hash = { path = "../fast-hash" }
 url = "2.4.0"
+
+fast-hash = { path = "../fast-hash" }
