@@ -127,7 +127,7 @@ impl FileSystem for RealFileSystem {
   }
 
   fn canonicalize(&self, path: &Path) -> std::io::Result<CanonicalPathBuf> {
-    Ok(CanonicalPathBuf(std::fs::canonicalize(path)?))
+    Ok(CanonicalPathBuf(dunce::canonicalize(path)?))
   }
 
   fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>> {
