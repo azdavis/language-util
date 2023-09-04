@@ -20,7 +20,11 @@ impl<T> WithRange<T> {
   }
 }
 
-/// Make a text size or panic. Panics if the usize overflows a u32.
+/// Make a text size or panic.
+///
+/// # Panics
+///
+/// If the usize overflows a u32.
 #[must_use]
 pub fn mk_text_size(n: usize) -> TextSize {
   TextSize::try_from(n).expect("could not make text size")
