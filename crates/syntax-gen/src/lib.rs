@@ -10,7 +10,6 @@ mod kind;
 mod seq;
 mod token;
 mod util;
-mod write;
 
 use crate::util::Cx;
 use fast_hash::{FxHashMap, FxHashSet};
@@ -32,8 +31,6 @@ pub use token::{Token, TokenKind};
 /// - `rowan` from crates.io
 /// - `token` from language-util
 ///
-/// The files will be formatted with rustfmt if it is available.
-///
 /// - `kind.rs` will contain definitions for the language's `SyntaxKind` and associated types, using
 ///   all the different tokens extracted from `grammar` and processed with `get_token`.
 /// - `ast.rs` will contain a strongly-typed API for traversing a syntax tree for `lang`, based on
@@ -49,8 +46,6 @@ pub fn gen(
   doc: &FxHashMap<&str, &str>,
   special: &FxHashMap<&str, &str>,
 ) {
-  let out_dir = std::env::var_os("OUT_DIR").expect("OUT_DIR should be set");
-  let out_dir = std::path::Path::new(&out_dir);
   let lang = token::ident(lang);
   let grammar: Grammar = grammar.parse().expect("couldn't parse ungrammar");
   let tokens = token::TokenDb::new(&grammar, doc, special);
@@ -83,10 +78,16 @@ pub fn gen(
     types.push(seq::get(&cx, name, rules));
   }
   let ast_rs = ast::get(&cx.lang, types);
-  write::rust(out_dir.join("ast.rs").as_path(), ast_rs.to_string().as_str())
-    .expect("couldn't write ast.rs");
+  write_output(ast_rs, "ast.rs");
   let trivia: Vec<_> = trivia.iter().map(|&x| token::ident(x)).collect();
   let kind_rs = kind::get(cx, trivia, node_syntax_kinds);
-  write::rust(out_dir.join("kind.rs").as_path(), kind_rs.to_string().as_str())
-    .expect("couldn't write kind.rs");
+  write_output(kind_rs, "kind.rs");
+}
+
+fn write_output(output: proc_macro2::TokenStream, basename: &str) {
+  let out_dir = std::env::var_os("OUT_DIR").unwrap();
+  let dst = std::path::Path::new(&out_dir).join(basename);
+  let file = syn::parse2(output).unwrap();
+  let formatted = prettyplease::unparse(&file);
+  std::fs::write(dst, formatted).unwrap();
 }

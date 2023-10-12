@@ -9,8 +9,10 @@ publish = false
 test = false
 
 [dependencies]
+prettyplease = "0.2.15"
 proc-macro2 = "1.0.63"
 quote = "1.0.29"
+syn = "2.0.38"
 ungrammar = "1.16.1"
 
 char-name = { path = "../char-name" }
