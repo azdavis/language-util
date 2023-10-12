@@ -11,10 +11,13 @@
     "Maranget",
     "newtype",
     "nohash",
+    "prettyplease",
     "rustc",
     "RUSTFLAGS",
     "rustfmt",
     "Swatinem",
-    "Triviable"
+    "Triviable",
+    "ungrammar",
+    "unparse"
   ]
 }
