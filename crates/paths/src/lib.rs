@@ -185,9 +185,7 @@ impl FileSystem for MemoryFileSystem {
   }
 
   fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>> {
-    Ok(
-      self.0.keys().filter_map(|p| (p.starts_with(path) && p != path).then(|| p.clone())).collect(),
-    )
+    Ok(self.0.keys().filter(|&p| p.starts_with(path) && p != path).cloned().collect())
   }
 
   fn is_file(&self, path: &Path) -> bool {
