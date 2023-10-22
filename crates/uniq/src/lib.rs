@@ -1,6 +1,6 @@
 //! Unique identifiers.
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms, unsafe_code)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 #![no_std]
 
 use core::fmt;

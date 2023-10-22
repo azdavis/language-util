@@ -6,13 +6,16 @@ use fast_hash::FxHashSet;
 
 /// Does the check.
 ///
-/// Returns an error if the patterns or types passed don't make sense, or if the
-/// `lang` returned an error.
+/// # Errors
 ///
-/// This should never panic. It's a bug if this panics.
+/// If the patterns or types passed don't make sense, or if the `lang` returned an error.
+///
+/// # Panics
+///
+/// Upon internal error.
 pub fn check<L: Lang>(cx: &mut L::Cx, pats: Vec<Pat<L>>, ty: L::Ty) -> Result<Check<L>> {
   let mut ac = FxHashSet::default();
-  for pat in pats.iter() {
+  for pat in &pats {
     get_pat_indices(&mut ac, pat);
   }
   let mut mtx = Matrix::<L>::default();
@@ -82,11 +85,8 @@ fn useful<L: Lang>(
   if let Some(nc) = mtx.num_cols() {
     assert_eq!(nc, val.len());
   }
-  let (pat, ty) = match val.pop() {
-    Some(x) => x,
-    None => {
-      return Ok(if mtx.num_rows() == 0 { Useful::yes() } else { Useful::no() });
-    }
+  let Some((pat, ty)) = val.pop() else {
+    return Ok(if mtx.num_rows() == 0 { Useful::yes() } else { Useful::no() });
   };
   let mut ret = Useful::<Pat<L>>::no();
   let idx = pat.idx;
@@ -117,7 +117,7 @@ fn useful<L: Lang>(
         let mut val = val.clone();
         val.extend(new);
         let mut u = useful(cx, ac, depth + 1, &m, val)?;
-        for w in u.witnesses.iter_mut() {
+        for w in &mut u.witnesses {
           let args: Vec<_> = w.drain(w.len() - new_len..).rev().collect();
           w.push(Pat::con_(con.clone(), args, idx));
         }

@@ -2,7 +2,7 @@
 //!
 //! [1]: https://github.com/rust-analyzer/ungrammar
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 mod alt;
 mod ast;
@@ -12,10 +12,11 @@ mod token;
 mod util;
 
 use crate::util::Cx;
-use fast_hash::{FxHashMap, FxHashSet};
+use fast_hash::FxHashSet;
+use std::{collections::HashMap, hash::BuildHasher};
 use ungrammar::{Grammar, Rule};
 
-pub use token::{Token, TokenKind};
+pub use token::{Kind as TokenKind, Token};
 
 /// Generates Rust code from the `grammar` of the `lang` and writes it to `$OUT_DIR/kind.rs` and
 /// `$OUT_DIR/ast.rs`.
@@ -39,13 +40,15 @@ pub use token::{Token, TokenKind};
 /// # Panics
 ///
 /// If this process failed.
-pub fn gen(
+pub fn gen<S>(
   lang: &str,
   trivia: &[&str],
   grammar: &str,
-  doc: &FxHashMap<&str, &str>,
-  special: &FxHashMap<&str, &str>,
-) {
+  doc: &HashMap<&str, &str, S>,
+  special: &HashMap<&str, &str, S>,
+) where
+  S: BuildHasher,
+{
   let lang = token::ident(lang);
   let grammar: Grammar = grammar.parse().expect("couldn't parse ungrammar");
   let tokens = token::TokenDb::new(&grammar, doc, special);
@@ -75,12 +78,12 @@ pub fn gen(
     };
     let name = token::ident(&data.name);
     node_syntax_kinds.push(name.clone());
-    types.push(seq::get(&cx, name, rules));
+    types.push(seq::get(&cx, &name, rules));
   }
-  let ast_rs = ast::get(&cx.lang, types);
+  let ast_rs = ast::get(&cx.lang, &types);
   write_output(ast_rs, "ast.rs");
   let trivia: Vec<_> = trivia.iter().map(|&x| token::ident(x)).collect();
-  let kind_rs = kind::get(cx, trivia, node_syntax_kinds);
+  let kind_rs = kind::get(cx, &trivia, node_syntax_kinds);
   write_output(kind_rs, "kind.rs");
 }
 

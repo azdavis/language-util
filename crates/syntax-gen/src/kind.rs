@@ -2,9 +2,10 @@ use crate::util::Cx;
 use quote::quote;
 use std::cmp::Reverse;
 
+#[allow(clippy::too_many_lines)]
 pub(crate) fn get(
   Cx { grammar, tokens, lang, .. }: Cx,
-  trivia: Vec<proc_macro2::Ident>,
+  trivia: &[proc_macro2::Ident],
   node_syntax_kinds: Vec<proc_macro2::Ident>,
 ) -> proc_macro2::TokenStream {
   let keywords = {
@@ -70,7 +71,7 @@ pub(crate) fn get(
     .iter()
     .cloned()
     .chain(keywords.iter().chain(punctuation.iter()).map(|(_, tok)| tok.name_ident()))
-    .chain(special.iter().map(|tok| tok.name_ident()))
+    .chain(special.iter().map(crate::token::Token::name_ident))
     .chain(node_syntax_kinds)
     .collect();
   let last_syntax_kind = syntax_kinds.last().unwrap();

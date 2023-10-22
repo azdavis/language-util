@@ -1,4 +1,5 @@
 use fast_hash::FxHashMap;
+use std::{collections::HashMap, hash::BuildHasher};
 
 #[derive(Debug)]
 pub(crate) struct TokenDb {
@@ -9,7 +10,7 @@ pub(crate) struct TokenDb {
 
 /// A token kind.
 #[derive(Debug)]
-pub enum TokenKind {
+pub enum Kind {
   /// Punctuation, like `{` or `}` or `++`
   Punctuation,
   /// Keywords, i.e. they might be confused as identifiers.
@@ -36,29 +37,32 @@ impl Token {
 }
 
 impl TokenDb {
-  pub(crate) fn new(
+  pub(crate) fn new<S>(
     grammar: &ungrammar::Grammar,
-    doc: &FxHashMap<&str, &str>,
-    special_desc: &FxHashMap<&str, &str>,
-  ) -> Self {
+    doc: &HashMap<&str, &str, S>,
+    special_desc: &HashMap<&str, &str, S>,
+  ) -> Self
+  where
+    S: BuildHasher,
+  {
     let mut punctuation = FxHashMap::default();
     let mut keywords = FxHashMap::default();
     let mut special = FxHashMap::default();
     for token in grammar.tokens() {
       let orig_name = grammar[token].name.as_str();
-      let kind: TokenKind;
+      let kind: Kind;
       let mut name: String;
       let mut desc = None::<String>;
       if let Some(&d) = special_desc.get(orig_name) {
-        kind = TokenKind::Special;
+        kind = Kind::Special;
         name = orig_name.to_owned();
         desc = Some(d.to_owned());
       } else if orig_name.chars().any(|c| c.is_ascii_alphabetic()) {
-        kind = TokenKind::Keyword;
+        kind = Kind::Keyword;
         name = identifier_case::snake_to_pascal(orig_name);
         name.push_str("Kw");
       } else {
-        kind = TokenKind::Punctuation;
+        kind = Kind::Punctuation;
         name = String::new();
         for c in orig_name.chars() {
           name.push_str(char_name::get(c));
@@ -66,14 +70,14 @@ impl TokenDb {
       }
       let tok = Token { name, desc, doc: doc.get(orig_name).map(|&x| x.to_owned()) };
       match kind {
-        TokenKind::Punctuation => {
-          assert!(punctuation.insert(token, tok).is_none())
+        Kind::Punctuation => {
+          assert!(punctuation.insert(token, tok).is_none());
         }
-        TokenKind::Keyword => {
-          assert!(keywords.insert(token, tok).is_none())
+        Kind::Keyword => {
+          assert!(keywords.insert(token, tok).is_none());
         }
-        TokenKind::Special => {
-          assert!(special.insert(token, tok).is_none())
+        Kind::Special => {
+          assert!(special.insert(token, tok).is_none());
         }
       }
     }

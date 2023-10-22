@@ -15,6 +15,7 @@
     "rustc",
     "RUSTFLAGS",
     "rustfmt",
+    "smol",
     "Swatinem",
     "Triviable",
     "ungrammar",

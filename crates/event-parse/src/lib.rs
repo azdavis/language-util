@@ -19,7 +19,7 @@
 //!
 //! [1]: https://github.com/rust-analyzer/rust-analyzer
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 #[cfg(feature = "rowan")]
 pub mod rowan_sink;
@@ -71,12 +71,20 @@ impl<'a, K, E> Parser<'a, K, E> {
   ///
   /// The events recorded since this syntax construct began, if any, will belong
   /// to the parent.
+  ///
+  /// # Panics
+  ///
+  /// On internal error.
   pub fn abandon(&mut self, mut en: Entered) {
     en.bomb.defuse();
     assert!(self.events[en.ev_idx].is_none());
   }
 
   /// Finishes parsing a syntax construct.
+  ///
+  /// # Panics
+  ///
+  /// On internal error.
   pub fn exit(&mut self, mut en: Entered, kind: K) -> Exited {
     en.bomb.defuse();
     let ev = &mut self.events[en.ev_idx];
@@ -93,8 +101,13 @@ impl<'a, K, E> Parser<'a, K, E> {
   /// we see an `<int>`, we enter and exit an `<expr>` node for it. But then
   /// we see the `+` and realize the completed `<expr>` node for the int should
   /// be the child of a node for the `+`. That's when this function comes in.
+  ///
+  /// # Panics
+  ///
+  /// On internal error.
   pub fn precede(&mut self, ex: Exited) -> Entered {
     let ret = self.enter();
+    #[allow(clippy::match_on_vec_items)]
     match self.events[ex.ev_idx] {
       Some(Event::Enter(_, ref mut parent)) => {
         assert!(parent.is_none());
@@ -136,6 +149,7 @@ impl<'a, K, E> Parser<'a, K, E> {
 
   /// Returns whether there were _no_ errors since the save, i.e. whether we did
   /// _not_ restore to that save.
+  #[allow(clippy::needless_pass_by_value)]
   pub fn ok_since(&mut self, save: Save) -> bool {
     let error_since =
       self.events.iter().skip(save.events_len).any(|ev| matches!(*ev, Some(Event::Error(..))));
@@ -190,6 +204,10 @@ where
   ///
   /// This is often used after calling [`Parser::at`] to verify some expected
   /// token was present.
+  ///
+  /// # Panics
+  ///
+  /// If there was no token to bump.
   pub fn bump(&mut self) -> Token<'a, K> {
     let ret = self.peek().expect("bump with no tokens");
     self.events.push(Some(Event::Token));
@@ -199,7 +217,7 @@ where
 
   /// Records an error at the current token.
   pub fn error(&mut self, error: E) {
-    self.events.push(Some(Event::Error(error)))
+    self.events.push(Some(Event::Error(error)));
   }
 
   fn eat_trivia(&mut self, to_enter: &mut Vec<K>, sink: &mut dyn Sink<K, E>) {
@@ -220,6 +238,10 @@ where
   }
 
   /// Finishes parsing, and writes the parsed tree into the `sink`.
+  ///
+  /// # Panics
+  ///
+  /// On internal error.
   pub fn finish(mut self, sink: &mut dyn Sink<K, E>) {
     let mut to_enter = Vec::<K>::new();
     let mut fst = None::<K>;
@@ -227,10 +249,7 @@ where
     let mut kinds = Vec::new();
     let mut levels: usize = 0;
     for idx in 0..self.events.len() {
-      let ev = match self.events[idx].take() {
-        Some(ev) => ev,
-        None => continue,
-      };
+      let Some(ev) = self.events[idx].take() else { continue };
       match ev {
         Event::Enter(kind, mut parent) => {
           assert!(kinds.is_empty());
@@ -346,6 +365,7 @@ pub struct Exited {
 
 impl Exited {
   /// Returns whether there are no tokens in the node closed by this [`Exited`].
+  #[must_use]
   pub fn is_empty(&self) -> bool {
     self.is_empty
   }
@@ -353,6 +373,7 @@ impl Exited {
 
 /// A save of the parser's state.
 #[derive(Debug)]
+#[must_use]
 pub struct Save {
   tok_idx: usize,
   events_len: usize,
@@ -398,5 +419,5 @@ impl<K, E> fmt::Debug for Event<K, E> {
 fn event_size() {
   let ev = std::mem::size_of::<Event<(), ()>>();
   let op_ev = std::mem::size_of::<Option<Event<(), ()>>>();
-  assert_eq!(ev, op_ev)
+  assert_eq!(ev, op_ev);
 }

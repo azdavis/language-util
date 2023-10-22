@@ -15,6 +15,7 @@ pub struct RowanSink<E> {
 
 impl<E> RowanSink<E> {
   /// Finish the builder.
+  #[must_use]
   pub fn finish<L>(mut self) -> (SyntaxNode<L>, Vec<Error<E>>)
   where
     L: Language,
@@ -66,7 +67,7 @@ where
   }
 
   fn error(&mut self, error: E) {
-    self.no_range.push(error)
+    self.no_range.push(error);
   }
 }
 

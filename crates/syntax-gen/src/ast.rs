@@ -2,7 +2,7 @@ use quote::quote;
 
 pub(crate) fn get(
   lang: &proc_macro2::Ident,
-  types: Vec<proc_macro2::TokenStream>,
+  types: &[proc_macro2::TokenStream],
 ) -> proc_macro2::TokenStream {
   quote! {
     use crate::kind::{SyntaxKind as SK, SyntaxNode, SyntaxToken, #lang};

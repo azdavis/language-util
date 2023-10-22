@@ -1,6 +1,9 @@
 //! Names for punctuation characters.
 
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
+
 /// Returns the name of the given character, or None if it is unknown.
+#[must_use]
 pub fn get_opt(c: char) -> Option<&'static str> {
   let ret = match c {
     '_' => "Underscore",
@@ -37,7 +40,12 @@ pub fn get_opt(c: char) -> Option<&'static str> {
   Some(ret)
 }
 
-/// Returns the name of the given character, or panics if it is unknown.
+/// Returns the name of the given character.
+///
+/// # Panics
+///
+/// If the name of this character is not known.
+#[must_use]
 pub fn get(c: char) -> &'static str {
   match get_opt(c) {
     Some(s) => s,

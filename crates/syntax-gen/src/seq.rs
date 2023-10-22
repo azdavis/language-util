@@ -6,7 +6,7 @@ use quote::{format_ident, quote};
 use std::hash::Hash;
 use ungrammar::Rule;
 
-pub(crate) fn get(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
+pub(crate) fn get(cx: &Cx, name: &Ident, rules: &[Rule]) -> TokenStream {
   let lang = &cx.lang;
   let mut counts = Counts::default();
   let fields = rules.iter().map(|rule| field(cx, &mut counts, rule));
@@ -117,6 +117,7 @@ fn field<'cx>(cx: &'cx Cx, counts: &mut Counts<&'cx str>, mut rule: &Rule) -> To
       Rule::Seq(_) | Rule::Alt(_) => panic!("bad field rule: {rule:?}"),
     }
   }
+  #[allow(clippy::single_match_else)]
   let field_name = match label {
     Some(x) => ident(x),
     None => {

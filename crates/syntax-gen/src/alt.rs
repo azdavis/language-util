@@ -12,16 +12,17 @@ pub(crate) fn get(
   rules: &[Rule],
 ) -> TokenStream {
   match rules.first().unwrap() {
-    Rule::Node(_) => get_nodes(cx, name, rules),
+    Rule::Node(_) => get_nodes(cx, &name, rules),
     Rule::Token(_) => {
-      token_alts.insert(name.clone());
-      get_tokens(cx, name, rules)
+      let ts = get_tokens(cx, &name, rules);
+      token_alts.insert(name);
+      ts
     }
     bad => panic!("bad alt rule {bad:?}"),
   }
 }
 
-fn get_nodes(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
+fn get_nodes(cx: &Cx, name: &Ident, rules: &[Rule]) -> TokenStream {
   let lang = &cx.lang;
   let mut defs = Vec::with_capacity(rules.len());
   let mut kinds = Vec::with_capacity(rules.len());
@@ -62,7 +63,7 @@ fn get_nodes(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
   }
 }
 
-fn get_tokens(cx: &Cx, name: Ident, rules: &[Rule]) -> TokenStream {
+fn get_tokens(cx: &Cx, name: &Ident, rules: &[Rule]) -> TokenStream {
   let name_kind = format_ident!("{}Kind", name);
   let mut defs = Vec::with_capacity(rules.len());
   let mut casts = Vec::with_capacity(rules.len());

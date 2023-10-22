@@ -1,6 +1,6 @@
 //! Topological sorting.
 
-#![deny(missing_debug_implementations, missing_docs, rust_2018_idioms)]
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
 
 #[cfg(test)]
 mod tests;
@@ -11,8 +11,15 @@ use std::fmt;
 /// A graph, represented as a map between nodes and their neighbors.
 pub type Graph<T> = BTreeMap<T, BTreeSet<T>>;
 
-/// Returns a reverse topological ordering of the graph, or an error if the
-/// graph has a cycle.
+/// Returns a reverse topological ordering of the graph.
+///
+/// # Errors
+///
+/// If the graph has a cycle.
+///
+/// # Panics
+///
+/// On internal error.
 pub fn get<T>(graph: &Graph<T>) -> Result<Vec<T>, CycleError<T>>
 where
   T: Copy + Eq + Ord,

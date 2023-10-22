@@ -1,5 +1,7 @@
 //! Utilities for working with identifiers in different cases.
 
+#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
+
 /// Works with either upper or lower snake case.
 ///
 /// ```
@@ -8,6 +10,7 @@
 /// assert_eq!(snake_to_pascal("the_best"), "TheBest");
 /// assert_eq!(snake_to_pascal("HEY_THERE_DUDE"), "HeyThereDude");
 /// ```
+#[must_use]
 pub fn snake_to_pascal(s: &str) -> String {
   let mut ret = String::with_capacity(s.len());
   let mut is_cap = true;
@@ -33,6 +36,7 @@ pub fn snake_to_pascal(s: &str) -> String {
 /// assert_eq!(pascal_to_snake("readFile"), "read_file");
 /// assert_eq!(pascal_to_snake("GetLine"), "get_line");
 ///```
+#[must_use]
 pub fn pascal_to_snake(s: &str) -> String {
   let mut ret = String::with_capacity(s.len());
   let mut cs = s.chars();
