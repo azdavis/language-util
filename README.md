@@ -46,14 +46,6 @@ Generic topological sorting. Useful for when you have many interdependent things
 
 Unique identifiers, and their generation.
 
-## `unwrap-or`
-
-The macro form of `Option::unwrap_or`.
-
-## `uri-db`
-
-A database of URIs. Allows us to turn a URI (heap-allocated, expensive to pass around) into a cheap, integer-sized ID, and also convert that ID back into a URI.
-
 ## `paths`
 
 Types for working with paths, notably:
