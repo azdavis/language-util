@@ -10,4 +10,4 @@ test = false
 doctest = false
 
 [dependencies]
-nohash-hasher = "0.2"
+nohash-hasher.workspace = true

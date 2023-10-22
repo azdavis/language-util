@@ -10,4 +10,4 @@ test = false
 doctest = false
 
 [dependencies]
-rustc-hash = "1.1.0"
+rustc-hash.workspace = true

@@ -10,10 +10,10 @@ doctest = false
 test = false
 
 [dependencies]
-drop_bomb = "0.1.5"
-rowan = { version = "0.15.11", optional = true }
+drop_bomb.workspace = true
+rowan = { workspace = true, optional = true }
 
-token = { path = "../token" }
+token.path = "../token"
 
 [features]
 default = ["rowan"]

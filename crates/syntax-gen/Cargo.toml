@@ -9,12 +9,12 @@ publish.workspace = true
 test = false
 
 [dependencies]
-prettyplease = "0.2.15"
-proc-macro2 = "1.0.63"
-quote = "1.0.29"
-syn = "2.0.38"
-ungrammar = "1.16.1"
+prettyplease.workspace = true
+proc-macro2.workspace = true
+quote.workspace = true
+syn.workspace = true
+ungrammar.workspace = true
 
-char-name = { path = "../char-name" }
-fast-hash = { path = "../fast-hash" }
-identifier-case = { path = "../identifier-case" }
+char-name.path = "../char-name"
+fast-hash.path = "../fast-hash"
+identifier-case.path = "../identifier-case"

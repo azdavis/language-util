@@ -9,6 +9,6 @@ publish.workspace = true
 doctest = false
 
 [dependencies]
-line-index = "=0.1.0-pre.1"
+line-index.workspace = true
 
-text-size-util = { path = "../text-size-util" }
+text-size-util.path = "../text-size-util"
