@@ -18,40 +18,43 @@ use ungrammar::{Grammar, Rule};
 
 pub use token::{Kind as TokenKind, Token};
 
-/// Generates Rust code from the `grammar` of the `lang` and writes it to `$OUT_DIR/kind.rs` and
-/// `$OUT_DIR/ast.rs`.
+/// The options to pass to `gen`.
+#[derive(Debug)]
+pub struct Options<'a, S> {
+  /// The name of the language.
+  pub lang: &'a str,
+  /// A list of all the `SyntaxKind`s which should be made as trivia.
+  pub trivia: &'a [&'a str],
+  /// Text of the ungrammar for the language, possibly via `include_str!`.
+  pub grammar: &'a str,
+  /// A map from token names to documentation.
+  pub doc: &'a HashMap<&'a str, &'a str, S>,
+  /// A map from special tokens names to descriptions for those tokens.
+  pub special: &'a HashMap<&'a str, &'a str, S>,
+}
+
+/// Generates Rust code from the `grammar` of the `lang` and writes it to two files:
 ///
-/// - `lang` is the name of the language.
-/// - `trivia` is a list of all the `SyntaxKind`s which should be made as trivia.
-/// - `grammar` is the ungrammar for the language.
-/// - `doc` is a map from tokens to docs.
-/// - `special` is a map from special tokens to descriptions for those tokens.
+/// - `$OUT_DIR/kind.rs`, which will contain definitions for the language's `SyntaxKind` and
+///   associated types, using all the different tokens extracted from `grammar`.
+/// - `$OUT_DIR/ast.rs`, which will contain a strongly-typed API for traversing an abstract syntax
+///   tree, based on the `grammar`.
 ///
 /// The generated Rust files will depend on:
 ///
 /// - `rowan` from crates.io
 /// - `token` from language-util
 ///
-/// - `kind.rs` will contain definitions for the language's `SyntaxKind` and associated types, using
-///   all the different tokens extracted from `grammar` and processed with `get_token`.
-/// - `ast.rs` will contain a strongly-typed API for traversing a syntax tree for `lang`, based on
-///   the `grammar`.
-///
 /// # Panics
 ///
 /// If this process failed.
-pub fn gen<S>(
-  lang: &str,
-  trivia: &[&str],
-  grammar: &str,
-  doc: &HashMap<&str, &str, S>,
-  special: &HashMap<&str, &str, S>,
-) where
+pub fn gen<S>(opts: &Options<'_, S>)
+where
   S: BuildHasher,
 {
-  let lang = token::ident(lang);
-  let grammar: Grammar = grammar.parse().expect("couldn't parse ungrammar");
-  let tokens = token::TokenDb::new(&grammar, doc, special);
+  let lang = token::ident(opts.lang);
+  let grammar: Grammar = opts.grammar.parse().expect("couldn't parse ungrammar");
+  let tokens = token::TokenDb::new(&grammar, opts.doc, opts.special);
   let mut types = Vec::<proc_macro2::TokenStream>::new();
   let mut node_syntax_kinds = Vec::<proc_macro2::Ident>::new();
   let mut cx = Cx { lang, grammar, tokens, token_alts: FxHashSet::default() };
@@ -82,7 +85,7 @@ pub fn gen<S>(
   }
   let ast_rs = ast::get(&cx.lang, &types);
   write_output(ast_rs, "ast.rs");
-  let trivia: Vec<_> = trivia.iter().map(|&x| token::ident(x)).collect();
+  let trivia: Vec<_> = opts.trivia.iter().map(|&x| token::ident(x)).collect();
   let kind_rs = kind::get(cx, &trivia, node_syntax_kinds);
   write_output(kind_rs, "kind.rs");
 }
