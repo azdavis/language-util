@@ -3,10 +3,13 @@ use quote::quote;
 pub(crate) fn get(
   lang: &proc_macro2::Ident,
   types: &[proc_macro2::TokenStream],
+  file: &str,
 ) -> proc_macro2::TokenStream {
   quote! {
     use crate::kind::{SyntaxKind as SK, SyntaxNode, SyntaxToken, #lang};
     pub use rowan::ast::{AstNode, AstPtr};
+
+    pub const GENERATED_BY: &str = #file;
 
     pub type SyntaxNodePtr = rowan::ast::SyntaxNodePtr<#lang>;
 

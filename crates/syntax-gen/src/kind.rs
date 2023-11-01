@@ -7,6 +7,7 @@ pub(crate) fn get(
   Cx { grammar, tokens, lang, .. }: Cx,
   trivia: &[proc_macro2::Ident],
   node_syntax_kinds: Vec<proc_macro2::Ident>,
+  file: &str,
 ) -> proc_macro2::TokenStream {
   let keywords = {
     let mut xs: Vec<_> = tokens
@@ -77,6 +78,8 @@ pub(crate) fn get(
   let last_syntax_kind = syntax_kinds.last().unwrap();
   quote! {
     use std::fmt;
+
+    pub const GENERATED_BY: &str = #file;
 
     #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
     #[repr(u16)]

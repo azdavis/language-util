@@ -31,6 +31,10 @@ pub struct Options<'a, S> {
   pub doc: &'a HashMap<&'a str, &'a str, S>,
   /// A map from special tokens names to descriptions for those tokens.
   pub special: &'a HashMap<&'a str, &'a str, S>,
+  /// The file that called `gen`, possibly via `file!`.
+  ///
+  /// Will be added as doc in the generated files.
+  pub file: &'a str,
 }
 
 /// Generates Rust code from the `grammar` of the `lang` and writes it to two files:
@@ -83,10 +87,10 @@ where
     node_syntax_kinds.push(name.clone());
     types.push(seq::get(&cx, &name, rules));
   }
-  let ast_rs = ast::get(&cx.lang, &types);
+  let ast_rs = ast::get(&cx.lang, &types, opts.file);
   write_output(ast_rs, "ast.rs");
   let trivia: Vec<_> = opts.trivia.iter().map(|&x| token::ident(x)).collect();
-  let kind_rs = kind::get(cx, &trivia, node_syntax_kinds);
+  let kind_rs = kind::get(cx, &trivia, node_syntax_kinds, opts.file);
   write_output(kind_rs, "kind.rs");
 }
 
