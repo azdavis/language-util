@@ -1,8 +1,6 @@
 //! Transforming a Markdown file with lots of level-2 headings, each documenting some `code`, into
 //! a hash map.
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-
 use fast_hash::FxHashMap;
 
 /// Does the transformation. `f` returns the starting string for each key.

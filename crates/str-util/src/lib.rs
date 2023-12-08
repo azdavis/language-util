@@ -1,7 +1,5 @@
 //! Utilities for strings.
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-
 use std::{borrow::Borrow, fmt};
 
 pub use smol_str::SmolStr;

@@ -9,5 +9,8 @@ publish.workspace = true
 test = false
 doctest = false
 
+[lints]
+workspace = true
+
 [dependencies]
 log.workspace = true

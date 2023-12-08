@@ -19,8 +19,6 @@
 //!
 //! [1]: https://github.com/rust-analyzer/rust-analyzer
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-
 #[cfg(feature = "rowan")]
 pub mod rowan_sink;
 

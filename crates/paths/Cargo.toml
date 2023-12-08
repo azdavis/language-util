@@ -9,6 +9,9 @@ publish.workspace = true
 test = false
 doctest = false
 
+[lints]
+workspace = true
+
 [dependencies]
 dunce.workspace = true
 glob.workspace = true

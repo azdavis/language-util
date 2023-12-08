@@ -1,7 +1,5 @@
 //! Utilities for working with identifiers in different cases.
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-
 /// Works with either upper or lower snake case.
 ///
 /// ```

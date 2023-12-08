@@ -9,6 +9,9 @@ publish.workspace = true
 doctest = false
 test = false
 
+[lints]
+workspace = true
+
 [dependencies]
 drop_bomb.workspace = true
 rowan = { workspace = true, optional = true }

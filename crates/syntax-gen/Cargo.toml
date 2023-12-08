@@ -8,6 +8,9 @@ publish.workspace = true
 [lib]
 test = false
 
+[lints]
+workspace = true
+
 [dependencies]
 prettyplease.workspace = true
 proc-macro2.workspace = true

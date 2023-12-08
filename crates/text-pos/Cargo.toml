@@ -8,6 +8,9 @@ publish.workspace = true
 [lib]
 doctest = false
 
+[lints]
+workspace = true
+
 [dependencies]
 line-index.workspace = true
 

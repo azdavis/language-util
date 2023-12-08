@@ -1,7 +1,5 @@
 //! A thin wrapper over [`rustc_hash`] with some extra helper functions.
 
-#![deny(clippy::pedantic, missing_debug_implementations, missing_docs, rust_2018_idioms)]
-
 use std::hash::{BuildHasherDefault, Hash};
 
 pub use rustc_hash::{FxHashMap, FxHashSet, FxHasher};
