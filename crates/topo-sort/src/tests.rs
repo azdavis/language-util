@@ -1,5 +1,4 @@
 use crate::{get, CycleError, Graph};
-use std::collections::{BTreeMap, BTreeSet};
 
 fn check(graph: &Graph<u32>, order: &[u32]) {
   assert_eq!(get(graph).unwrap(), order);
@@ -10,67 +9,85 @@ fn check_cycle(graph: &Graph<u32>) {
   assert!(matches!(err, CycleError(_)));
 }
 
+fn mk_graph(g: &[(u32, &[u32])]) -> Graph<u32> {
+  g.iter().map(|&(node, ns)| (node, ns.iter().copied().collect())).collect()
+}
+
 #[test]
 fn empty() {
-  check(&BTreeMap::new(), &[]);
+  let graph = mk_graph(&[]);
+  check(&graph, &[]);
 }
 
 #[test]
 fn one() {
-  let graph = BTreeMap::from([(1, BTreeSet::new())]);
+  let graph = mk_graph(&[(1, &[])]);
   check(&graph, &[1]);
 }
 
 #[test]
 fn separate() {
-  let graph = BTreeMap::from([(1, BTreeSet::new()), (2, BTreeSet::new())]);
+  let graph = mk_graph(&[
+    // comment prevents rustfmt from doing all one line
+    (1, &[]),
+    (2, &[]),
+  ]);
   check(&graph, &[2, 1]);
 }
 
 #[test]
 fn simple() {
-  let graph = BTreeMap::from([(1, BTreeSet::from([2])), (2, BTreeSet::new())]);
+  let graph = mk_graph(&[
+    //
+    (1, &[2]),
+    (2, &[]),
+  ]);
   check(&graph, &[2, 1]);
 }
 
 #[test]
 fn bigger() {
-  let graph = BTreeMap::from([
-    (1, BTreeSet::from([4])),
-    (2, BTreeSet::from([1, 7])),
-    (3, BTreeSet::from([4, 6, 8])),
-    (4, BTreeSet::from([5])),
-    (5, BTreeSet::from([6, 8])),
-    (6, BTreeSet::new()),
-    (7, BTreeSet::from([3, 8, 9])),
-    (8, BTreeSet::from([9])),
-    (9, BTreeSet::new()),
+  let graph = mk_graph(&[
+    (1, &[4]),
+    (2, &[1, 7]),
+    (3, &[4, 6, 8]),
+    (4, &[5]),
+    (5, &[6, 8]),
+    (6, &[]),
+    (7, &[3, 8, 9]),
+    (8, &[9]),
+    (9, &[]),
   ]);
   check(&graph, &[9, 8, 6, 5, 4, 3, 7, 1, 2]);
 }
 
 #[test]
 fn small_cycle() {
-  let graph = BTreeMap::from([(2, BTreeSet::from([1])), (1, BTreeSet::from([2]))]);
+  let graph = mk_graph(&[(2, &[1]), (1, &[2])]);
   check_cycle(&graph);
 }
 
 #[test]
 fn bigger_cycle() {
-  let graph = BTreeMap::from([
-    (1, BTreeSet::from([2])),
-    (2, BTreeSet::new()),
-    (3, BTreeSet::from([6])),
-    (4, BTreeSet::from([5])),
-    (5, BTreeSet::from([3, 2])),
-    (6, BTreeSet::from([1, 4])),
+  let graph = mk_graph(&[
+    //
+    (1, &[2]),
+    (2, &[]),
+    (3, &[6]),
+    (4, &[5]),
+    (5, &[3, 2]),
+    (6, &[1, 4]),
   ]);
   check_cycle(&graph);
 }
 
 #[test]
 fn small_cycle_with_extra() {
-  let graph =
-    BTreeMap::from([(1, BTreeSet::from([2])), (2, BTreeSet::from([1])), (3, BTreeSet::from([1]))]);
+  let graph = mk_graph(&[
+    //
+    (1, &[2]),
+    (2, &[1]),
+    (3, &[1]),
+  ]);
   check_cycle(&graph);
 }
