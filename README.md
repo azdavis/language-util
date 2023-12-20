@@ -118,6 +118,10 @@ This crate will turn it into a mapping like this:
 }
 ```
 
+## `write-rs-tokens`
+
+Write Rust tokens to a file, as part of a build script.
+
 [c0ls]: https://github.com/azdavis/c0ls
 [millet]: https://github.com/azdavis/millet
 [ungrammar]: https://github.com/rust-analyzer/ungrammar

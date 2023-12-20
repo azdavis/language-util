@@ -12,12 +12,11 @@ test = false
 workspace = true
 
 [dependencies]
-prettyplease.workspace = true
 proc-macro2.workspace = true
 quote.workspace = true
-syn.workspace = true
 ungrammar.workspace = true
 
 char-name.path = "../char-name"
 fast-hash.path = "../fast-hash"
 identifier-case.path = "../identifier-case"
+write-rs-tokens.path = "../write-rs-tokens"

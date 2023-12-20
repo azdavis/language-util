@@ -86,16 +86,8 @@ where
     types.push(seq::get(&cx, &name, rules));
   }
   let ast_rs = ast::get(&cx.lang, &types, opts.file);
-  write_output(ast_rs, "ast.rs");
+  write_rs_tokens::go(ast_rs, "ast.rs");
   let trivia: Vec<_> = opts.trivia.iter().map(|&x| token::ident(x)).collect();
   let kind_rs = kind::get(cx, &trivia, node_syntax_kinds, opts.file);
-  write_output(kind_rs, "kind.rs");
-}
-
-fn write_output(output: proc_macro2::TokenStream, basename: &str) {
-  let out_dir = std::env::var_os("OUT_DIR").unwrap();
-  let dst = std::path::Path::new(&out_dir).join(basename);
-  let file = syn::parse2(output).unwrap();
-  let formatted = prettyplease::unparse(&file);
-  std::fs::write(dst, formatted).unwrap();
+  write_rs_tokens::go(kind_rs, "kind.rs");
 }
