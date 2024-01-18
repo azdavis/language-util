@@ -21,15 +21,25 @@ impl Store {
 
   /// Returns an ID for this path.
   pub fn get_id(&mut self, path: &CanonicalPathBuf) -> PathId {
-    #![allow(clippy::single_match_else)]
-    match self.path_to_id.get(path) {
-      Some(x) => *x,
-      None => {
-        let id = PathId(idx::Idx::new(self.id_to_path.len()));
-        self.id_to_path.push(path.clone());
-        self.path_to_id.insert(path.clone(), id);
-        id
-      }
+    if let Some(x) = self.path_to_id.get(path) {
+      *x
+    } else {
+      let id = PathId(idx::Idx::new(self.id_to_path.len()));
+      self.id_to_path.push(path.clone());
+      self.path_to_id.insert(path.clone(), id);
+      id
+    }
+  }
+
+  /// Like `get_id` but the `path` is owned, possibly saving a clone.
+  pub fn get_id_owned(&mut self, path: CanonicalPathBuf) -> PathId {
+    if let Some(x) = self.path_to_id.get(&path) {
+      *x
+    } else {
+      let id = PathId(idx::Idx::new(self.id_to_path.len()));
+      self.id_to_path.push(path.clone());
+      self.path_to_id.insert(path, id);
+      id
     }
   }
 
@@ -37,6 +47,22 @@ impl Store {
   #[must_use]
   pub fn get_path(&self, id: PathId) -> &CanonicalPathBuf {
     &self.id_to_path[id.0.to_usize()]
+  }
+
+  /// Combine `other` into `self`.
+  ///
+  /// After the call, `self` will contain all the paths that were in `other`.
+  ///
+  /// Calls `f` with the `PathId`s for each path in `other` according to `(other, self)`.
+  pub fn combine<F>(&mut self, other: Self, f: &mut F)
+  where
+    F: FnMut(PathId, PathId),
+  {
+    for (idx, path) in other.id_to_path.into_iter().enumerate() {
+      let old = PathId(idx::Idx::new(idx));
+      let new = self.get_id_owned(path);
+      f(old, new);
+    }
   }
 }
 
