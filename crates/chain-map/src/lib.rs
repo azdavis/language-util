@@ -180,3 +180,13 @@ impl<K, V> Iterator for IntoIter<K, V> {
     self.0.next()
   }
 }
+
+#[test]
+fn smoke() {
+  let mut m = ChainMap::<u32, u32>::default();
+  assert!(m.is_empty());
+  assert!(m.get(&3).is_none());
+  m.insert(3, 4);
+  assert!(!m.is_empty());
+  assert_eq!(*m.get(&3).unwrap(), 4);
+}
