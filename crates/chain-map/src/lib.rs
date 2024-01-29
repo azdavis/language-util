@@ -1,4 +1,8 @@
 //! A map optimized for the use-case of cloning and adding a few elements to the clone.
+//!
+//! Similar to Python's [`collections.ChainMap`][1].
+//!
+//! [1]: https://docs.python.org/3/library/collections.html#collections.ChainMap
 
 use fast_hash::{map, FxHashMap, FxHashSet};
 use std::borrow::Borrow;
