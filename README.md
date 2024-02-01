@@ -30,6 +30,10 @@ Turn `PascalCase` into `snake_case` and vice versa.
 
 Determine whether a sequence of patterns is exhaustive or if any of the patterns are unreachable.
 
+## `str-process`
+
+Process a string by each byte.
+
 ## `syntax-gen`
 
 Generates Rust code from an [ungrammar][].
