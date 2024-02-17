@@ -20,13 +20,13 @@ impl Store {
   }
 
   /// Returns an ID for this path.
-  pub fn get_id(&mut self, path: &AbsPathBuf) -> PathId {
+  pub fn get_id(&mut self, path: &AbsPath) -> PathId {
     if let Some(x) = self.path_to_id.get(path) {
       *x
     } else {
       let id = PathId(idx::Idx::new(self.id_to_path.len()));
-      self.id_to_path.push(path.clone());
-      self.path_to_id.insert(path.clone(), id);
+      self.id_to_path.push(path.to_owned());
+      self.path_to_id.insert(path.to_owned(), id);
       id
     }
   }
@@ -45,8 +45,8 @@ impl Store {
 
   /// Returns the path for this ID.
   #[must_use]
-  pub fn get_path(&self, id: PathId) -> &AbsPathBuf {
-    &self.id_to_path[id.0.to_usize()]
+  pub fn get_path(&self, id: PathId) -> &AbsPath {
+    self.id_to_path[id.0.to_usize()].as_abs_path()
   }
 
   /// Combine `other` into `self`.
@@ -96,6 +96,14 @@ pub type PathMap<T> = nohash_hasher::IntMap<PathId, T>;
 #[repr(transparent)]
 pub struct AbsPath(Path);
 
+impl ToOwned for AbsPath {
+  type Owned = AbsPathBuf;
+
+  fn to_owned(&self) -> Self::Owned {
+    AbsPathBuf(self.as_path().to_owned())
+  }
+}
+
 impl AbsPath {
   /// Returns a new [`AbsPath`] if the [`Path`] is absolute.
   #[must_use]
@@ -123,6 +131,12 @@ impl AbsPath {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[repr(transparent)]
 pub struct AbsPathBuf(PathBuf);
+
+impl std::borrow::Borrow<AbsPath> for AbsPathBuf {
+  fn borrow(&self) -> &AbsPath {
+    self.as_abs_path()
+  }
+}
 
 impl AbsPathBuf {
   /// Returns a new [`AbsPathBuf`] if the [`PathBuf`] is absolute.
