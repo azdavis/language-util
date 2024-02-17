@@ -96,6 +96,12 @@ pub type PathMap<T> = nohash_hasher::IntMap<PathId, T>;
 pub struct AbsPathBuf(PathBuf);
 
 impl AbsPathBuf {
+  /// Returns a new [`AbsPathBuf`] if the [`PathBuf`] is absolute.
+  #[must_use]
+  pub fn try_new(path: PathBuf) -> Option<Self> {
+    path.is_absolute().then_some(Self(path))
+  }
+
   /// Returns the underlying [`Path`].
   #[must_use]
   pub fn as_path(&self) -> &Path {
@@ -106,6 +112,16 @@ impl AbsPathBuf {
   #[must_use]
   pub fn into_path_buf(self) -> PathBuf {
     self.0
+  }
+
+  /// Pushes `path` onto `self`.
+  ///
+  /// - If `path` is absolute, it replaces `self`.
+  /// - If `path` is relative, it is appended onto `self`.
+  ///
+  /// Either way, `self` remains absolute.
+  pub fn push<P: AsRef<Path>>(&mut self, path: P) {
+    self.0.push(path);
   }
 }
 
