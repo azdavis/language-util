@@ -88,11 +88,40 @@ pub struct WithPath<T> {
   pub val: T,
 }
 
-/// A map from paths to something.
+/// A map from path IDs to something.
 pub type PathMap<T> = nohash_hasher::IntMap<PathId, T>;
+
+/// An absolute path.
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct AbsPath(Path);
+
+impl AbsPath {
+  /// Returns a new [`AbsPath`] if the [`Path`] is absolute.
+  #[must_use]
+  pub fn try_new(path: &Path) -> Option<&Self> {
+    path.is_absolute().then_some(unsafe { &*(path as *const Path as *const AbsPath) })
+  }
+
+  fn new_unchecked(path: &Path) -> &Self {
+    unsafe { &*(path as *const Path as *const AbsPath) }
+  }
+
+  /// Returns the underlying [`Path`].
+  #[must_use]
+  pub fn as_path(&self) -> &Path {
+    &self.0
+  }
+
+  /// Returns the parent of this. If it exists, it will be absolute.
+  pub fn parent(&self) -> Option<&AbsPath> {
+    self.0.parent().map(AbsPath::new_unchecked)
+  }
+}
 
 /// An absolute path buffer.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[repr(transparent)]
 pub struct AbsPathBuf(PathBuf);
 
 impl AbsPathBuf {
@@ -102,10 +131,10 @@ impl AbsPathBuf {
     path.is_absolute().then_some(Self(path))
   }
 
-  /// Returns the underlying [`Path`].
+  /// Returns this as an [`AbsPath`].
   #[must_use]
-  pub fn as_path(&self) -> &Path {
-    self.0.as_path()
+  pub fn as_abs_path(&self) -> &AbsPath {
+    AbsPath::new_unchecked(self.0.as_path())
   }
 
   /// Turns this into a [`PathBuf`].
