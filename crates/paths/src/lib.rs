@@ -8,8 +8,8 @@ use std::path::{Path, PathBuf};
 /// A store of paths.
 #[derive(Debug, Default)]
 pub struct Store {
-  id_to_path: Vec<CanonicalPathBuf>,
-  path_to_id: FxHashMap<CanonicalPathBuf, PathId>,
+  id_to_path: Vec<AbsPathBuf>,
+  path_to_id: FxHashMap<AbsPathBuf, PathId>,
 }
 
 impl Store {
@@ -20,7 +20,7 @@ impl Store {
   }
 
   /// Returns an ID for this path.
-  pub fn get_id(&mut self, path: &CanonicalPathBuf) -> PathId {
+  pub fn get_id(&mut self, path: &AbsPathBuf) -> PathId {
     if let Some(x) = self.path_to_id.get(path) {
       *x
     } else {
@@ -32,7 +32,7 @@ impl Store {
   }
 
   /// Like `get_id` but the `path` is owned, possibly saving a clone.
-  pub fn get_id_owned(&mut self, path: CanonicalPathBuf) -> PathId {
+  pub fn get_id_owned(&mut self, path: AbsPathBuf) -> PathId {
     if let Some(x) = self.path_to_id.get(&path) {
       *x
     } else {
@@ -45,7 +45,7 @@ impl Store {
 
   /// Returns the path for this ID.
   #[must_use]
-  pub fn get_path(&self, id: PathId) -> &CanonicalPathBuf {
+  pub fn get_path(&self, id: PathId) -> &AbsPathBuf {
     &self.id_to_path[id.0.to_usize()]
   }
 
@@ -91,11 +91,11 @@ pub struct WithPath<T> {
 /// A map from paths to something.
 pub type PathMap<T> = nohash_hasher::IntMap<PathId, T>;
 
-/// A canonical (and therefore absolute) path buffer.
+/// An absolute path buffer.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct CanonicalPathBuf(PathBuf);
+pub struct AbsPathBuf(PathBuf);
 
-impl CanonicalPathBuf {
+impl AbsPathBuf {
   /// Returns the underlying [`Path`].
   #[must_use]
   pub fn as_path(&self) -> &Path {
@@ -117,12 +117,6 @@ pub trait FileSystem {
   ///
   /// If the filesystem failed us.
   fn read_to_string(&self, path: &Path) -> std::io::Result<String>;
-  /// Canonicalize a path.
-  ///
-  /// # Errors
-  ///
-  /// If the filesystem failed us.
-  fn canonicalize(&self, path: &Path) -> std::io::Result<CanonicalPathBuf>;
   /// Read the entries of a directory. The vec is in arbitrary order.
   ///
   /// # Errors
@@ -148,10 +142,6 @@ pub struct RealFileSystem(());
 impl FileSystem for RealFileSystem {
   fn read_to_string(&self, path: &Path) -> std::io::Result<String> {
     std::fs::read_to_string(path)
-  }
-
-  fn canonicalize(&self, path: &Path) -> std::io::Result<CanonicalPathBuf> {
-    Ok(CanonicalPathBuf(dunce::canonicalize(path)?))
   }
 
   fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>> {
@@ -197,14 +187,6 @@ impl FileSystem for MemoryFileSystem {
     match self.0.get(path) {
       Some(x) => Ok(x.clone()),
       None => Err(std::io::Error::from(std::io::ErrorKind::NotFound)),
-    }
-  }
-
-  fn canonicalize(&self, path: &Path) -> std::io::Result<CanonicalPathBuf> {
-    if self.0.contains_key(path) {
-      Ok(CanonicalPathBuf(path.to_owned()))
-    } else {
-      Err(std::io::Error::from(std::io::ErrorKind::NotFound))
     }
   }
 

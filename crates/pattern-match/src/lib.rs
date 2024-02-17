@@ -1,6 +1,6 @@
 //! Pattern matching.
 //!
-//! Adapted from ["Warnings for pattern matching"][1] by Luc Maranget, and
+//! Adapted from [Warnings for pattern matching][1] by Luc Maranget, and
 //! [`rustc`][2].
 //!
 //! [1]: http://moscova.inria.fr/~maranget/papers/warn/

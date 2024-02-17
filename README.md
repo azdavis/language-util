@@ -58,8 +58,8 @@ Unique identifiers, and their generation.
 
 Types for working with paths, notably:
 
-- A wrapper type for `PathBuf` that guarantees the inner `PathBuf` is canonical.
-- A type that transforms these canonical path buffers into cheap IDs.
+- A wrapper type for `PathBuf` that guarantees the inner `PathBuf` is absolute.
+- A type that transforms these absolute path buffers into cheap IDs.
 
 ## `str-util`
 
