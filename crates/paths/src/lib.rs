@@ -8,8 +8,8 @@ use std::path::{Path, PathBuf};
 /// A store of paths.
 #[derive(Debug, Default)]
 pub struct Store {
-  id_to_path: Vec<AbsPathBuf>,
-  path_to_id: FxHashMap<AbsPathBuf, PathId>,
+  id_to_path: Vec<CanonicalPathBuf>,
+  path_to_id: FxHashMap<CanonicalPathBuf, PathId>,
 }
 
 impl Store {
@@ -20,7 +20,7 @@ impl Store {
   }
 
   /// Returns an ID for this path.
-  pub fn get_id(&mut self, path: &AbsPath) -> PathId {
+  pub fn get_id(&mut self, path: &CanonicalPath) -> PathId {
     if let Some(x) = self.path_to_id.get(path) {
       *x
     } else {
@@ -32,7 +32,7 @@ impl Store {
   }
 
   /// Like `get_id` but the `path` is owned, possibly saving a clone.
-  pub fn get_id_owned(&mut self, path: AbsPathBuf) -> PathId {
+  pub fn get_id_owned(&mut self, path: CanonicalPathBuf) -> PathId {
     if let Some(x) = self.path_to_id.get(&path) {
       *x
     } else {
@@ -45,8 +45,8 @@ impl Store {
 
   /// Returns the path for this ID.
   #[must_use]
-  pub fn get_path(&self, id: PathId) -> &AbsPath {
-    self.id_to_path[id.0.to_usize()].as_abs_path()
+  pub fn get_path(&self, id: PathId) -> &CanonicalPath {
+    self.id_to_path[id.0.to_usize()].as_canonical_path()
   }
 
   /// Combine `other` into `self`.
@@ -91,28 +91,22 @@ pub struct WithPath<T> {
 /// A map from path IDs to something.
 pub type PathMap<T> = nohash_hasher::IntMap<PathId, T>;
 
-/// An absolute path.
+/// A canonical and thus absolute path.
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[repr(transparent)]
-pub struct AbsPath(Path);
+pub struct CanonicalPath(Path);
 
-impl ToOwned for AbsPath {
-  type Owned = AbsPathBuf;
+impl ToOwned for CanonicalPath {
+  type Owned = CanonicalPathBuf;
 
   fn to_owned(&self) -> Self::Owned {
-    AbsPathBuf(self.as_path().to_owned())
+    CanonicalPathBuf(self.as_path().to_owned())
   }
 }
 
-impl AbsPath {
-  /// Returns a new [`AbsPath`] if the [`Path`] is absolute.
-  #[must_use]
-  pub fn try_new(path: &Path) -> Option<&Self> {
-    path.is_absolute().then_some(unsafe { &*(path as *const Path as *const AbsPath) })
-  }
-
+impl CanonicalPath {
   fn new_unchecked(path: &Path) -> &Self {
-    unsafe { &*(path as *const Path as *const AbsPath) }
+    unsafe { &*(path as *const Path as *const CanonicalPath) }
   }
 
   /// Returns the underlying [`Path`].
@@ -121,50 +115,40 @@ impl AbsPath {
     &self.0
   }
 
-  /// Returns the parent of this. If it exists, it will be absolute.
-  pub fn parent(&self) -> Option<&AbsPath> {
-    self.0.parent().map(AbsPath::new_unchecked)
+  /// Returns the parent of this. If it exists, it will be canonical.
+  pub fn parent(&self) -> Option<&CanonicalPath> {
+    self.0.parent().map(CanonicalPath::new_unchecked)
   }
 }
 
-/// An absolute path buffer.
+/// A canonical and thus absolute path buffer.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[repr(transparent)]
-pub struct AbsPathBuf(PathBuf);
+pub struct CanonicalPathBuf(PathBuf);
 
-impl std::borrow::Borrow<AbsPath> for AbsPathBuf {
-  fn borrow(&self) -> &AbsPath {
-    self.as_abs_path()
+impl std::borrow::Borrow<CanonicalPath> for CanonicalPathBuf {
+  fn borrow(&self) -> &CanonicalPath {
+    self.as_canonical_path()
   }
 }
 
-impl AbsPathBuf {
-  /// Returns a new [`AbsPathBuf`] if the [`PathBuf`] is absolute.
+impl CanonicalPathBuf {
+  /// Returns this as an [`CanonicalPath`].
   #[must_use]
-  pub fn try_new(path: PathBuf) -> Option<Self> {
-    path.is_absolute().then_some(Self(path))
+  pub fn as_canonical_path(&self) -> &CanonicalPath {
+    CanonicalPath::new_unchecked(self.0.as_path())
   }
 
-  /// Returns this as an [`AbsPath`].
+  /// Returns the underlying [`Path`].
   #[must_use]
-  pub fn as_abs_path(&self) -> &AbsPath {
-    AbsPath::new_unchecked(self.0.as_path())
+  pub fn as_path(&self) -> &Path {
+    &self.0
   }
 
   /// Turns this into a [`PathBuf`].
   #[must_use]
   pub fn into_path_buf(self) -> PathBuf {
     self.0
-  }
-
-  /// Pushes `path` onto `self`.
-  ///
-  /// - If `path` is absolute, it replaces `self`.
-  /// - If `path` is relative, it is appended onto `self`.
-  ///
-  /// Either way, `self` remains absolute.
-  pub fn push<P: AsRef<Path>>(&mut self, path: P) {
-    self.0.push(path);
   }
 }
 
@@ -176,16 +160,27 @@ pub trait FileSystem {
   ///
   /// If the filesystem failed us.
   fn read_to_string(&self, path: &Path) -> std::io::Result<String>;
+
+  /// Make a path canonical.
+  ///
+  /// # Errors
+  ///
+  /// If the filesystem failed us.
+  fn canonical(&self, path: &Path) -> std::io::Result<CanonicalPathBuf>;
+
   /// Read the entries of a directory. The vec is in arbitrary order.
   ///
   /// # Errors
   ///
   /// If the filesystem failed us.
   fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>>;
+
   /// Returns whether this is a file. If unknown, returns false.
   fn is_file(&self, path: &Path) -> bool;
+
   /// An iterator of paths from `glob`.
   type GlobPaths: Iterator<Item = glob::GlobResult>;
+
   /// Glob the file system.
   ///
   /// # Errors
@@ -201,6 +196,10 @@ pub struct RealFileSystem(());
 impl FileSystem for RealFileSystem {
   fn read_to_string(&self, path: &Path) -> std::io::Result<String> {
     std::fs::read_to_string(path)
+  }
+
+  fn canonical(&self, path: &Path) -> std::io::Result<CanonicalPathBuf> {
+    dunce::canonicalize(path).map(CanonicalPathBuf)
   }
 
   fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>> {
@@ -276,5 +275,9 @@ impl FileSystem for MemoryFileSystem {
       })
       .collect();
     Ok(ret.into_iter())
+  }
+
+  fn canonical(&self, path: &Path) -> std::io::Result<CanonicalPathBuf> {
+    Ok(CanonicalPathBuf(path.to_owned()))
   }
 }

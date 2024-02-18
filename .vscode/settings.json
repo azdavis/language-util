@@ -4,6 +4,7 @@
   },
   "rust-analyzer.check.command": "clippy",
   "cSpell.words": [
+    "canonicalize",
     "clippy",
     "dtolnay",
     "hasher",
