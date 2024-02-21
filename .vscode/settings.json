@@ -12,6 +12,7 @@
     "newtype",
     "nohash",
     "prettyplease",
+    "repr",
     "rustc",
     "RUSTFLAGS",
     "rustfmt",

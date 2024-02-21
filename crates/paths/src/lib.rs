@@ -107,6 +107,7 @@ impl ToOwned for CanonicalPath {
 impl CanonicalPath {
   fn new_unchecked(path: &Path) -> &Self {
     let ptr = std::ptr::from_ref(path) as *const CanonicalPath;
+    // SAFETY: CanonicalPath is repr(transparent)ly Path
     unsafe { &*ptr }
   }
 

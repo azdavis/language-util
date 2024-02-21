@@ -146,6 +146,9 @@ pub(crate) fn get(
 
       fn kind_from_raw(raw: rowan::SyntaxKind) -> Self::Kind {
         assert!(raw.0 <= SyntaxKind::#last_syntax_kind as u16);
+        // SAFETY: we checked the rowan::SyntaxKind's value is within the bounds of the SyntaxKind.
+        // SyntaxKind is repr(u16) and has no explicit discriminants, so it gets the auto-assigned
+        // discriminants 0, 1, ... by the compiler
         unsafe { std::mem::transmute::<u16, SyntaxKind>(raw.0) }
       }
 
