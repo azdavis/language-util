@@ -106,7 +106,8 @@ impl ToOwned for CanonicalPath {
 
 impl CanonicalPath {
   fn new_unchecked(path: &Path) -> &Self {
-    unsafe { &*(path as *const Path as *const CanonicalPath) }
+    let ptr = std::ptr::from_ref(path) as *const CanonicalPath;
+    unsafe { &*ptr }
   }
 
   /// Returns the underlying [`Path`].
