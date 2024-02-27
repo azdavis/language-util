@@ -14,7 +14,6 @@ workspace = true
 
 [dependencies]
 dunce.workspace = true
-glob.workspace = true
 nohash-hasher.workspace = true
 
 fast-hash.path = "../fast-hash"

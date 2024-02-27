@@ -1,7 +1,5 @@
 //! Types for working with paths.
 
-pub use glob::{GlobError, PatternError};
-
 use fast_hash::FxHashMap;
 use std::path::{Path, PathBuf};
 
@@ -223,23 +221,24 @@ impl FileSystem for RealFileSystem {
 /// - Have `..`
 /// - Do not start with `/`
 ///
-/// Also, using `glob` doesn't actually glob.
-///
 /// But this is mainly intended for basic testing purposes, so it's fine.
 #[derive(Debug, Default)]
-pub struct MemoryFileSystem(FxHashMap<PathBuf, String>);
+pub struct MemoryFileSystem {
+  /// The in-memory storage.
+  pub inner: FxHashMap<PathBuf, String>,
+}
 
 impl MemoryFileSystem {
   /// Returns a new `MemoryFileSystem`.
   #[must_use]
-  pub fn new(map: FxHashMap<PathBuf, String>) -> Self {
-    Self(map)
+  pub fn new(inner: FxHashMap<PathBuf, String>) -> Self {
+    Self { inner }
   }
 }
 
 impl FileSystem for MemoryFileSystem {
   fn read_to_string(&self, path: &Path) -> std::io::Result<String> {
-    match self.0.get(path) {
+    match self.inner.get(path) {
       Some(x) => Ok(x.clone()),
       None => Err(std::io::Error::from(std::io::ErrorKind::NotFound)),
     }
@@ -250,11 +249,11 @@ impl FileSystem for MemoryFileSystem {
   }
 
   fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>> {
-    Ok(self.0.keys().filter(|&p| p.starts_with(path) && p != path).cloned().collect())
+    Ok(self.inner.keys().filter(|&p| p.starts_with(path) && p != path).cloned().collect())
   }
 
   fn is_file(&self, path: &Path) -> bool {
-    self.0.contains_key(path)
+    self.inner.contains_key(path)
   }
 
   fn canonical(&self, path: &Path) -> std::io::Result<CanonicalPathBuf> {
