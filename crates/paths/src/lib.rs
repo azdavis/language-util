@@ -163,6 +163,13 @@ pub trait FileSystem {
   /// If the filesystem failed us.
   fn read_to_string(&self, path: &Path) -> std::io::Result<String>;
 
+  /// Read the contents of a file as bytes.
+  ///
+  /// # Errors
+  ///
+  /// If the filesystem failed us.
+  fn read_to_bytes(&self, path: &Path) -> std::io::Result<Vec<u8>>;
+
   /// Make a path canonical.
   ///
   /// # Errors
@@ -198,6 +205,10 @@ pub struct RealFileSystem(());
 impl FileSystem for RealFileSystem {
   fn read_to_string(&self, path: &Path) -> std::io::Result<String> {
     std::fs::read_to_string(path)
+  }
+
+  fn read_to_bytes(&self, path: &Path) -> std::io::Result<Vec<u8>> {
+    std::fs::read(path)
   }
 
   fn canonical(&self, path: &Path) -> std::io::Result<CanonicalPathBuf> {
@@ -248,6 +259,10 @@ impl FileSystem for MemoryFileSystem {
       Some(x) => Ok(x.clone()),
       None => Err(std::io::Error::from(std::io::ErrorKind::NotFound)),
     }
+  }
+
+  fn read_to_bytes(&self, path: &Path) -> std::io::Result<Vec<u8>> {
+    self.read_to_string(path).map(String::into_bytes)
   }
 
   fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>> {
