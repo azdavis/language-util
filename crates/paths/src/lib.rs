@@ -186,16 +186,6 @@ pub trait FileSystem {
 
   /// Returns whether this is a file. If unknown, returns false.
   fn is_file(&self, path: &Path) -> bool;
-
-  /// An iterator of paths from `glob`.
-  type GlobPaths: Iterator<Item = glob::GlobResult>;
-
-  /// Glob the file system.
-  ///
-  /// # Errors
-  ///
-  /// If the pattern is invalid.
-  fn glob(&self, pattern: &str) -> Result<Self::GlobPaths, glob::PatternError>;
 }
 
 /// The real file system. Does actual I/O.
@@ -221,12 +211,6 @@ impl FileSystem for RealFileSystem {
 
   fn is_file(&self, path: &Path) -> bool {
     path.is_file()
-  }
-
-  type GlobPaths = glob::Paths;
-
-  fn glob(&self, pattern: &str) -> Result<Self::GlobPaths, glob::PatternError> {
-    glob::glob(pattern)
   }
 }
 
@@ -273,28 +257,10 @@ impl FileSystem for MemoryFileSystem {
     self.0.contains_key(path)
   }
 
-  type GlobPaths = std::vec::IntoIter<glob::GlobResult>;
-
-  fn glob(&self, pattern: &str) -> Result<Self::GlobPaths, glob::PatternError> {
-    let cs: Vec<_> = Path::new(pattern).components().collect();
-    #[allow(clippy::needless_collect)]
-    let ret: Vec<_> = self
-      .0
-      .keys()
-      .filter_map(|path| {
-        if cs.len() != path.components().count() {
-          return None;
-        }
-        cs.iter()
-          .zip(path.components())
-          .all(|(&c, p)| c == std::path::Component::Normal(std::ffi::OsStr::new("*")) || c == p)
-          .then(|| Ok(path.clone()))
-      })
-      .collect();
-    Ok(ret.into_iter())
-  }
-
   fn canonical(&self, path: &Path) -> std::io::Result<CanonicalPathBuf> {
     Ok(CanonicalPathBuf(path.to_owned()))
   }
 }
+
+#[cfg(test)]
+fn _obj_safe(_: &dyn FileSystem) {}
