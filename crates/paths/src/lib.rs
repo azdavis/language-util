@@ -257,7 +257,11 @@ impl FileSystem for MemoryFileSystem {
   }
 
   fn canonical(&self, path: &Path) -> std::io::Result<CanonicalPathBuf> {
-    Ok(CanonicalPathBuf(path.to_owned()))
+    if self.inner.contains_key(path) {
+      Ok(CanonicalPathBuf(path.to_owned()))
+    } else {
+      Err(std::io::Error::from(std::io::ErrorKind::NotFound))
+    }
   }
 }
 
