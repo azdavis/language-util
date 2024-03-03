@@ -11,6 +11,7 @@
     "Maranget",
     "newtype",
     "nohash",
+    "peekable",
     "prettyplease",
     "repr",
     "rustc",

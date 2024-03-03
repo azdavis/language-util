@@ -1,13 +1,13 @@
 //! Types for working with paths.
 
 use fast_hash::FxHashMap;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 /// A store of paths.
 #[derive(Debug, Default)]
 pub struct Store {
-  id_to_path: Vec<CanonicalPathBuf>,
-  path_to_id: FxHashMap<CanonicalPathBuf, PathId>,
+  id_to_path: Vec<CleanPathBuf>,
+  path_to_id: FxHashMap<CleanPathBuf, PathId>,
 }
 
 impl Store {
@@ -18,7 +18,7 @@ impl Store {
   }
 
   /// Returns an ID for this path.
-  pub fn get_id(&mut self, path: &CanonicalPath) -> PathId {
+  pub fn get_id(&mut self, path: &CleanPath) -> PathId {
     if let Some(x) = self.path_to_id.get(path) {
       *x
     } else {
@@ -30,7 +30,7 @@ impl Store {
   }
 
   /// Like `get_id` but the `path` is owned, possibly saving a clone.
-  pub fn get_id_owned(&mut self, path: CanonicalPathBuf) -> PathId {
+  pub fn get_id_owned(&mut self, path: CleanPathBuf) -> PathId {
     if let Some(x) = self.path_to_id.get(&path) {
       *x
     } else {
@@ -43,8 +43,8 @@ impl Store {
 
   /// Returns the path for this ID.
   #[must_use]
-  pub fn get_path(&self, id: PathId) -> &CanonicalPath {
-    self.id_to_path[id.0.to_usize()].as_canonical_path()
+  pub fn get_path(&self, id: PathId) -> &CleanPath {
+    self.id_to_path[id.0.to_usize()].as_clean_path()
   }
 
   /// Combine `other` into `self`.
@@ -89,23 +89,27 @@ pub struct WithPath<T> {
 /// A map from path IDs to something.
 pub type PathMap<T> = nohash_hasher::IntMap<PathId, T>;
 
-/// A canonical and thus absolute path.
+/// A clean path.
+///
+/// "Clean" paths are absolute and contain no `.` or `..`.
+///
+/// They may, however, not be canonical because of symlinks.
 #[derive(Debug, PartialEq, Eq, Hash)]
 #[repr(transparent)]
-pub struct CanonicalPath(Path);
+pub struct CleanPath(Path);
 
-impl ToOwned for CanonicalPath {
-  type Owned = CanonicalPathBuf;
+impl ToOwned for CleanPath {
+  type Owned = CleanPathBuf;
 
   fn to_owned(&self) -> Self::Owned {
-    CanonicalPathBuf(self.as_path().to_owned())
+    CleanPathBuf(self.as_path().to_owned())
   }
 }
 
-impl CanonicalPath {
+impl CleanPath {
   fn new_unchecked(path: &Path) -> &Self {
-    let ptr = std::ptr::from_ref(path) as *const CanonicalPath;
-    // SAFETY: CanonicalPath is repr(transparent)ly Path
+    let ptr = std::ptr::from_ref(path) as *const CleanPath;
+    // SAFETY: CleanPath is repr(transparent)ly Path
     unsafe { &*ptr }
   }
 
@@ -115,28 +119,64 @@ impl CanonicalPath {
     &self.0
   }
 
-  /// Returns the parent of this. If it exists, it will be canonical.
-  pub fn parent(&self) -> Option<&CanonicalPath> {
-    self.0.parent().map(CanonicalPath::new_unchecked)
+  /// Returns the parent of this. If it exists, it will be clean.
+  pub fn parent(&self) -> Option<&CleanPath> {
+    self.0.parent().map(CleanPath::new_unchecked)
   }
 }
 
-/// A canonical and thus absolute path buffer.
+/// A cleaned path buffer.
+///
+/// See [`CleanPath`] for discussion of what it means for a path to be "clean".
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[repr(transparent)]
-pub struct CanonicalPathBuf(PathBuf);
+pub struct CleanPathBuf(PathBuf);
 
-impl std::borrow::Borrow<CanonicalPath> for CanonicalPathBuf {
-  fn borrow(&self) -> &CanonicalPath {
-    self.as_canonical_path()
+impl std::borrow::Borrow<CleanPath> for CleanPathBuf {
+  fn borrow(&self) -> &CleanPath {
+    self.as_clean_path()
   }
 }
 
-impl CanonicalPathBuf {
-  /// Returns this as an [`CanonicalPath`].
+impl CleanPathBuf {
+  /// Makes a new `CleanPathBuf`.
+  ///
+  /// Returns `None` if the path is not absolute.
   #[must_use]
-  pub fn as_canonical_path(&self) -> &CanonicalPath {
-    CanonicalPath::new_unchecked(self.0.as_path())
+  pub fn new(path: &Path) -> Option<Self> {
+    if !path.is_absolute() {
+      return None;
+    }
+
+    // from cargo
+    let mut components = path.components().peekable();
+    let mut ret = if let Some(&c @ Component::Prefix(..)) = components.peek() {
+      components.next();
+      PathBuf::from(c.as_os_str())
+    } else {
+      PathBuf::new()
+    };
+
+    for component in components {
+      match component {
+        Component::Prefix(..) => unreachable!("prefix can only occur at start"),
+        Component::RootDir => ret.push(component.as_os_str()),
+        Component::CurDir => {}
+        Component::ParentDir => {
+          // ignore if we have no parent
+          ret.pop();
+        }
+        Component::Normal(c) => ret.push(c),
+      }
+    }
+
+    Some(Self(ret))
+  }
+
+  /// Returns this as an [`CleanPath`].
+  #[must_use]
+  pub fn as_clean_path(&self) -> &CleanPath {
+    CleanPath::new_unchecked(self.0.as_path())
   }
 
   /// Returns the underlying [`Path`].
@@ -168,13 +208,6 @@ pub trait FileSystem {
   /// If the filesystem failed us.
   fn read_to_bytes(&self, path: &Path) -> std::io::Result<Vec<u8>>;
 
-  /// Make a path canonical.
-  ///
-  /// # Errors
-  ///
-  /// If the filesystem failed us.
-  fn canonical(&self, path: &Path) -> std::io::Result<CanonicalPathBuf>;
-
   /// Read the entries of a directory. The vec is in arbitrary order.
   ///
   /// # Errors
@@ -197,10 +230,6 @@ impl FileSystem for RealFileSystem {
 
   fn read_to_bytes(&self, path: &Path) -> std::io::Result<Vec<u8>> {
     std::fs::read(path)
-  }
-
-  fn canonical(&self, path: &Path) -> std::io::Result<CanonicalPathBuf> {
-    dunce::canonicalize(path).map(CanonicalPathBuf)
   }
 
   fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>> {
@@ -255,15 +284,19 @@ impl FileSystem for MemoryFileSystem {
   fn is_file(&self, path: &Path) -> bool {
     self.inner.contains_key(path)
   }
-
-  fn canonical(&self, path: &Path) -> std::io::Result<CanonicalPathBuf> {
-    if self.inner.contains_key(path) {
-      Ok(CanonicalPathBuf(path.to_owned()))
-    } else {
-      Err(std::io::Error::from(std::io::ErrorKind::NotFound))
-    }
-  }
 }
 
 #[cfg(test)]
 fn _obj_safe(_: &dyn FileSystem) {}
+
+#[test]
+fn clean_path() {
+  let start = Path::new("/foo/bar");
+  let back_up = Path::new("../quz/blob");
+  let gross = Path::new("/foo/bar/../quz/blob");
+  let clean = Path::new("/foo/quz/blob");
+  // ew
+  assert_eq!(start.join(back_up), gross);
+  // ah, that's better
+  assert_eq!(CleanPathBuf::new(gross).unwrap().as_path(), clean);
+}
