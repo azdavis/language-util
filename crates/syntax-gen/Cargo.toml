@@ -5,11 +5,12 @@ edition.workspace = true
 license.workspace = true
 publish.workspace = true
 
-[lib]
-test = false
-
 [lints]
 workspace = true
+
+[lib]
+test = false
+doctest = false
 
 [dependencies]
 proc-macro2.workspace = true
