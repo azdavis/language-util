@@ -241,6 +241,13 @@ impl CleanPathBuf {
 
 /// A file system.
 pub trait FileSystem {
+  /// Returns the current directory.
+  ///
+  /// # Errors
+  ///
+  /// If [`std::env::current_dir`] errored or returned a non-absolute path.
+  fn current_dir(&self) -> std::io::Result<CleanPathBuf>;
+
   /// Read the contents of a file.
   ///
   /// # Errors
@@ -271,6 +278,13 @@ pub trait FileSystem {
 pub struct RealFileSystem(());
 
 impl FileSystem for RealFileSystem {
+  fn current_dir(&self) -> std::io::Result<CleanPathBuf> {
+    match CleanPathBuf::new(std::env::current_dir()?) {
+      Some(x) => Ok(x),
+      None => Err(std::io::Error::other("path from `std::env::current_dir` was not absolute")),
+    }
+  }
+
   fn read_to_string(&self, path: &Path) -> std::io::Result<String> {
     std::fs::read_to_string(path)
   }
@@ -313,6 +327,10 @@ impl MemoryFileSystem {
 }
 
 impl FileSystem for MemoryFileSystem {
+  fn current_dir(&self) -> std::io::Result<CleanPathBuf> {
+    Ok(CleanPathBuf(PathBuf::from("/")))
+  }
+
   fn read_to_string(&self, path: &Path) -> std::io::Result<String> {
     match self.inner.get(path) {
       Some(x) => Ok(x.clone()),
