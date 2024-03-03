@@ -123,6 +123,15 @@ impl CleanPath {
   pub fn parent(&self) -> Option<&CleanPath> {
     self.0.parent().map(CleanPath::new_unchecked)
   }
+
+  /// Joins `self` with `other`.
+  ///
+  /// See [`CleanPathBuf::push`].
+  pub fn join<P: AsRef<Path>>(&self, other: P) -> CleanPathBuf {
+    let mut ret = self.to_owned();
+    ret.push(other);
+    ret
+  }
 }
 
 /// A cleaned path buffer.
@@ -233,7 +242,7 @@ impl CleanPathBuf {
   /// a.push(b);
   /// assert_eq!(a.as_path(), Path::new("/blob/glop"));
   /// ```
-  pub fn push(&mut self, path: &Path) {
+  pub fn push<P: AsRef<Path>>(&mut self, path: P) {
     self.0.push(path);
     *self = Self::new_unchecked(self.as_path());
   }
