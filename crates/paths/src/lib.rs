@@ -147,6 +147,12 @@ impl std::borrow::Borrow<CleanPath> for CleanPathBuf {
   }
 }
 
+impl std::borrow::Borrow<Path> for CleanPathBuf {
+  fn borrow(&self) -> &Path {
+    self.as_path()
+  }
+}
+
 impl CleanPathBuf {
   /// Makes a new `CleanPathBuf`.
   ///
@@ -313,31 +319,31 @@ impl FileSystem for RealFileSystem {
 
 /// A 'file system' in memory.
 ///
-/// Doesn't totally handle all `Path`s. For instance, it probably gives unexpected results for paths
-/// that:
-/// - Have trailing `/`
-/// - Have `.`
-/// - Have `..`
-/// - Do not start with `/`
-///
-/// But this is mainly intended for basic testing purposes, so it's fine.
+/// Doesn't totally handle all `Path`s. But this is mainly intended for basic testing purposes, so
+/// it's fine.
 #[derive(Debug, Default)]
 pub struct MemoryFileSystem {
   /// The in-memory storage.
-  pub inner: FxHashMap<PathBuf, String>,
+  pub inner: FxHashMap<CleanPathBuf, String>,
 }
 
 impl MemoryFileSystem {
   /// Returns a new `MemoryFileSystem`.
   #[must_use]
-  pub fn new(inner: FxHashMap<PathBuf, String>) -> Self {
+  pub fn new(inner: FxHashMap<CleanPathBuf, String>) -> Self {
     Self { inner }
+  }
+
+  /// Returns a clean path buf for the root directory, `/`.
+  #[must_use]
+  pub fn root() -> CleanPathBuf {
+    CleanPathBuf(PathBuf::from("/"))
   }
 }
 
 impl FileSystem for MemoryFileSystem {
   fn current_dir(&self) -> std::io::Result<CleanPathBuf> {
-    Ok(CleanPathBuf(PathBuf::from("/")))
+    Ok(Self::root())
   }
 
   fn read_to_string(&self, path: &Path) -> std::io::Result<String> {
@@ -352,7 +358,11 @@ impl FileSystem for MemoryFileSystem {
   }
 
   fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>> {
-    Ok(self.inner.keys().filter(|&p| p.starts_with(path) && p != path).cloned().collect())
+    let iter = self.inner.keys().filter_map(|pb| {
+      let p = pb.as_path();
+      (p.starts_with(path) && p != path).then(|| pb.to_owned().into_path_buf())
+    });
+    Ok(iter.collect())
   }
 
   fn is_file(&self, path: &Path) -> bool {
