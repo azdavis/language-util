@@ -143,12 +143,20 @@ impl CleanPathBuf {
   ///
   /// Returns `None` if the path is not absolute.
   #[must_use]
-  pub fn new(path: &Path) -> Option<Self> {
-    if !path.is_absolute() {
-      return None;
-    }
+  pub fn new<P: AsRef<Path>>(path: P) -> Option<Self> {
+    Self::new_from_path(path.as_ref())
+  }
 
-    // from cargo
+  fn new_from_path(path: &Path) -> Option<Self> {
+    path.is_absolute().then(|| Self::new_unchecked(path))
+  }
+
+  /// requires the `Path` is already known to be absolute
+  ///
+  /// largely lifted from cargo
+  fn new_unchecked(path: &Path) -> Self {
+    debug_assert!(path.is_absolute());
+
     let mut components = path.components().peekable();
     let mut ret = if let Some(&c @ Component::Prefix(..)) = components.peek() {
       components.next();
@@ -170,7 +178,7 @@ impl CleanPathBuf {
       }
     }
 
-    Some(Self(ret))
+    Self(ret)
   }
 
   /// Returns this as an [`CleanPath`].
@@ -189,6 +197,45 @@ impl CleanPathBuf {
   #[must_use]
   pub fn into_path_buf(self) -> PathBuf {
     self.0
+  }
+
+  /// Extends `self` with `path`, while preserving `self`'s cleanliness.
+  ///
+  /// Note that:
+  ///
+  /// - If `path` is relative, it will be joined at the end of `self`.
+  /// - If path is absolute, it will replace `self`.
+  ///
+  /// In either case, `self` remains absolute.
+  ///
+  /// # Examples
+  ///
+  /// When pushing a relative path:
+  ///
+  /// ```
+  /// # use paths::CleanPathBuf;
+  /// use std::path::Path;
+  ///
+  /// let mut a = CleanPathBuf::new("/foo/bar").unwrap();
+  /// let b = Path::new("../quz");
+  /// a.push(b);
+  /// assert_eq!(a.as_path(), Path::new("/foo/quz"));
+  /// ```
+  ///
+  /// When pushing an absolute path:
+  ///
+  /// ```
+  /// # use paths::CleanPathBuf;
+  /// use std::path::Path;
+  ///
+  /// let mut a = CleanPathBuf::new("/foo/bar").unwrap();
+  /// let b = Path::new("/quz/../blob/./glop");
+  /// a.push(b);
+  /// assert_eq!(a.as_path(), Path::new("/blob/glop"));
+  /// ```
+  pub fn push(&mut self, path: &Path) {
+    self.0.push(path);
+    *self = Self::new_unchecked(self.as_path());
   }
 }
 
