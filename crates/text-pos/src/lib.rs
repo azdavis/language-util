@@ -131,7 +131,7 @@ impl PositionDb {
 }
 
 /// A pair of `(line, col)` for UTF-8.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct PositionUtf8 {
   /// Zero-based.
   line: u32,
@@ -142,7 +142,7 @@ struct PositionUtf8 {
 /// A pair of start and end positions for UTF-8.
 ///
 /// `start` comes before `end`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct RangeUtf8 {
   /// The start.
   start: PositionUtf8,
@@ -151,7 +151,7 @@ struct RangeUtf8 {
 }
 
 /// A pair of `(line, col)` for UTF-16.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PositionUtf16 {
   /// Zero-based.
   pub line: u32,
@@ -168,7 +168,7 @@ impl fmt::Display for PositionUtf16 {
 /// A pair of start and end positions for UTF-16.
 ///
 /// `start` comes before `end`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct RangeUtf16 {
   /// The start.
   pub start: PositionUtf16,
