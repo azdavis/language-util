@@ -89,6 +89,9 @@ pub struct WithPath<T> {
 /// A map from path IDs to something.
 pub type PathMap<T> = nohash_hasher::IntMap<PathId, T>;
 
+/// A set of path IDs.
+pub type PathSet = nohash_hasher::IntSet<PathId>;
+
 /// A clean path.
 ///
 /// "Clean" paths are absolute and contain no `.` or `..`.
