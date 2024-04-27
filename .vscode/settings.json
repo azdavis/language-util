@@ -14,6 +14,7 @@
     "peekable",
     "prettyplease",
     "repr",
+    "rposition",
     "rustc",
     "RUSTFLAGS",
     "rustfmt",

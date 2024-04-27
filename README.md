@@ -4,6 +4,10 @@ Various utility crates that might be useful when implementing a programming lang
 
 Many of these crates used to be from [c0ls][] or [Millet][], but they are generic enough that they were moved out of it so that they may be re-used in other language servers.
 
+## `apply-changes`
+
+Apply a sequence of text changes to a text.
+
 ## `chain-map`
 
 A map optimized for the use-case of cloning and adding a few elements to the clone.
