@@ -97,7 +97,7 @@ pub type PathSet = nohash_hasher::IntSet<PathId>;
 /// "Clean" paths are absolute and contain no `.` or `..`.
 ///
 /// They may, however, not be canonical because of symlinks.
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct CleanPath(Path);
 
@@ -140,7 +140,7 @@ impl CleanPath {
 /// A cleaned path buffer.
 ///
 /// See [`CleanPath`] for discussion of what it means for a path to be "clean".
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct CleanPathBuf(PathBuf);
 
