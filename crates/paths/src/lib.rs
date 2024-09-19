@@ -1,6 +1,7 @@
 //! Types for working with paths.
 
 use fast_hash::FxHashMap;
+use std::collections::BTreeMap;
 use std::path::{Component, Path, PathBuf};
 
 /// A store of paths.
@@ -327,13 +328,13 @@ impl FileSystem for RealFileSystem {
 #[derive(Debug, Default)]
 pub struct MemoryFileSystem {
   /// The in-memory storage.
-  pub inner: FxHashMap<CleanPathBuf, String>,
+  pub inner: BTreeMap<CleanPathBuf, String>,
 }
 
 impl MemoryFileSystem {
   /// Returns a new `MemoryFileSystem`.
   #[must_use]
-  pub fn new(inner: FxHashMap<CleanPathBuf, String>) -> Self {
+  pub fn new(inner: BTreeMap<CleanPathBuf, String>) -> Self {
     Self { inner }
   }
 
