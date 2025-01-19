@@ -11,3 +11,6 @@ doctest = false
 
 [lints]
 workspace = true
+
+[dependencies]
+text-pos.path = "../text-pos"

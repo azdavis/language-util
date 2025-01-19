@@ -2,12 +2,29 @@
 
 use std::fmt;
 
+/// A diagnostic message about a bit of code.
+#[derive(Debug)]
+pub struct Diagnostic {
+  /// The range of the file this diagnostic applies to.
+  pub range: text_pos::RangeUtf16,
+  /// The message of the diagnostic.
+  pub message: String,
+  /// The severity.
+  pub severity: Severity,
+}
+
+impl fmt::Display for Diagnostic {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{}: {}: {}", self.range, self.severity, self.message)
+  }
+}
+
 /// The severity of a diagnostic.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Severity {
-  /// Warning. Should probably address.
+  /// Should maybe be addressed, but can compile without addressing.
   Warning,
-  /// Error. The maximum. Pretty much means code cannot be run.
+  /// Can't compile unless addressed.
   Error,
 }
 
