@@ -178,6 +178,10 @@ pub struct RangeUtf16 {
 
 impl fmt::Display for RangeUtf16 {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}-{}", self.start, self.end)
+    if self.start.line == self.end.line {
+      write!(f, "{}-{}", self.start, self.end.col)
+    } else {
+      write!(f, "{}-{}", self.start, self.end)
+    }
   }
 }
