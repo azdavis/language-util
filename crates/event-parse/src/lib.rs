@@ -315,7 +315,7 @@ where
 
   /// Returns whether the token `n` ahead has the given `kind`.
   pub fn at_n(&mut self, n: usize, kind: K) -> bool {
-    self.peek_n(n).map_or(false, |tok| tok.kind == kind)
+    self.peek_n(n).is_some_and(|tok| tok.kind == kind)
   }
 
   /// If the current token's kind is `kind`, then this consumes it, else this

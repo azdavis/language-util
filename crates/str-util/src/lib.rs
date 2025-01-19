@@ -27,7 +27,7 @@ impl Name {
     S: Into<SmolStr>,
   {
     let s: SmolStr = s.into();
-    (!s.is_empty()).then(|| Self(s))
+    (!s.is_empty()).then_some(Self(s))
   }
 
   /// Returns this as a string slice.
