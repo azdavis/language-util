@@ -176,6 +176,14 @@ pub struct RangeUtf16 {
   pub end: PositionUtf16,
 }
 
+impl RangeUtf16 {
+  /// Returns a range that starts and ends at the position.
+  #[must_use]
+  pub fn zero(pos: PositionUtf16) -> Self {
+    Self { start: pos, end: pos }
+  }
+}
+
 impl fmt::Display for RangeUtf16 {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     if self.start.line == self.end.line {
