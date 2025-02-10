@@ -21,7 +21,7 @@ where
 {
   let work: crate::Work<_> = graph.keys().copied().collect();
   let mut visitor = Visitor { graph, order: Vec::new() };
-  let got = crate::run(&mut visitor, work);
+  let got = work.run(&mut visitor);
   match got.cycle {
     Some(x) => Err(CycleError(x)),
     None => Ok(visitor.order),

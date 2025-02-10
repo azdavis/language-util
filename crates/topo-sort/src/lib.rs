@@ -18,6 +18,53 @@ impl<T> Work<T> {
   pub fn push(&mut self, value: T) {
     self.0.push(Action::start(value));
   }
+
+  pub fn run<V>(mut self, visitor: &mut V) -> Ret<V::Set, V::Elem>
+  where
+    T: Copy,
+    V: Visitor<Elem = T>,
+    V::Set: Set<T>,
+  {
+    let mut cur = V::Set::new();
+    let mut done = V::Set::new();
+    // INVARIANT: `level_idx` == how many `End`s are in `work`.
+    let mut level_idx = 0usize;
+    let mut cycle = None::<V::Elem>;
+    while let Some(Action(value, kind)) = self.0.pop() {
+      match kind {
+        ActionKind::Start => {
+          if done.contains(value) {
+            continue;
+          }
+          let Some(data) = visitor.enter(value) else { continue };
+          if !cur.insert(value) {
+            if cycle.is_none() {
+              cycle = Some(value);
+            }
+            continue;
+          }
+          self.0.push(Action::end(value));
+          level_idx += 1;
+          visitor.process(value, data, &mut self);
+        }
+        ActionKind::End => {
+          level_idx = match level_idx.checked_sub(1) {
+            None => {
+              always!(false, "`End` should have a matching `Start`");
+              continue;
+            }
+            Some(x) => x,
+          };
+          always!(cur.remove(value), "should only `End` when in `cur`");
+          always!(done.insert(value), "should not `End` if already done");
+          visitor.exit(value, level_idx);
+        }
+      }
+    }
+    always!(level_idx == 0, "should return to starting level");
+    always!(cur.is_empty(), "should have no progress when done");
+    Ret { done, cycle }
+  }
 }
 
 impl<T> Default for Work<T> {
@@ -42,51 +89,6 @@ impl<T> FromIterator<T> for Work<T> {
   }
 }
 
-pub fn run<V>(visitor: &mut V, mut work: Work<V::Elem>) -> Ret<V::Set, V::Elem>
-where
-  V: Visitor,
-{
-  let mut cur = V::Set::new();
-  let mut done = V::Set::new();
-  // INVARIANT: `level_idx` == how many `End`s are in `work`.
-  let mut level_idx = 0usize;
-  let mut cycle = None::<V::Elem>;
-  while let Some(Action(value, kind)) = work.0.pop() {
-    match kind {
-      ActionKind::Start => {
-        if done.contains(value) {
-          continue;
-        }
-        let Some(data) = visitor.enter(value) else { continue };
-        if !cur.insert(value) {
-          if cycle.is_none() {
-            cycle = Some(value);
-          }
-          continue;
-        }
-        work.0.push(Action::end(value));
-        level_idx += 1;
-        visitor.process(value, data, &mut work);
-      }
-      ActionKind::End => {
-        level_idx = match level_idx.checked_sub(1) {
-          None => {
-            always!(false, "`End` should have a matching `Start`");
-            continue;
-          }
-          Some(x) => x,
-        };
-        always!(cur.remove(value), "should only `End` when in `cur`");
-        always!(done.insert(value), "should not `End` if already done");
-        visitor.exit(value, level_idx);
-      }
-    }
-  }
-  always!(level_idx == 0, "should return to starting level");
-  always!(cur.is_empty(), "should have no progress when done");
-  Ret { done, cycle }
-}
-
 #[derive(Debug)]
 pub struct Ret<S, T> {
   pub done: S,
@@ -94,9 +96,9 @@ pub struct Ret<S, T> {
 }
 
 pub trait Visitor {
-  type Elem: Copy;
+  type Elem;
   type Data;
-  type Set: Set<Self::Elem>;
+  type Set;
   fn enter(&self, value: Self::Elem) -> Option<Self::Data>;
   fn process(&mut self, value: Self::Elem, data: Self::Data, work: &mut Work<Self::Elem>);
   fn exit(&mut self, value: Self::Elem, level_idx: usize);
@@ -196,11 +198,11 @@ enum ActionKind {
 struct Action<T>(T, ActionKind);
 
 impl<T> Action<T> {
-  const fn start(value: T) -> Self {
+  fn start(value: T) -> Self {
     Self(value, ActionKind::Start)
   }
 
-  const fn end(value: T) -> Self {
+  fn end(value: T) -> Self {
     Self(value, ActionKind::End)
   }
 }
