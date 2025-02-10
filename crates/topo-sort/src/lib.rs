@@ -12,25 +12,6 @@ use std::collections::{BTreeSet, HashSet};
 use std::hash::{BuildHasherDefault, Hash, Hasher};
 
 #[derive(Debug)]
-enum ActionKind {
-  Start,
-  End,
-}
-
-#[derive(Debug)]
-struct Action<T>(T, ActionKind);
-
-impl<T> Action<T> {
-  const fn start(value: T) -> Self {
-    Self(value, ActionKind::Start)
-  }
-
-  const fn end(value: T) -> Self {
-    Self(value, ActionKind::End)
-  }
-}
-
-#[derive(Debug)]
 pub struct Work<T>(Vec<Action<T>>);
 
 impl<T> Work<T> {
@@ -203,4 +184,23 @@ where
 pub struct Ret<S, T> {
   pub done: S,
   pub cycle: Option<T>,
+}
+
+#[derive(Debug)]
+enum ActionKind {
+  Start,
+  End,
+}
+
+#[derive(Debug)]
+struct Action<T>(T, ActionKind);
+
+impl<T> Action<T> {
+  const fn start(value: T) -> Self {
+    Self(value, ActionKind::Start)
+  }
+
+  const fn end(value: T) -> Self {
+    Self(value, ActionKind::End)
+  }
 }
