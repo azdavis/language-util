@@ -12,20 +12,20 @@ use std::collections::{BTreeSet, HashSet};
 use std::hash::{BuildHasherDefault, Hash, Hasher};
 
 #[derive(Debug)]
-pub enum ActionKind {
+enum ActionKind {
   Start,
   End,
 }
 
 #[derive(Debug)]
-pub struct Action<T>(pub T, pub ActionKind);
+struct Action<T>(T, ActionKind);
 
 impl<T> Action<T> {
-  pub const fn start(value: T) -> Self {
+  const fn start(value: T) -> Self {
     Self(value, ActionKind::Start)
   }
 
-  pub const fn end(value: T) -> Self {
+  const fn end(value: T) -> Self {
     Self(value, ActionKind::End)
   }
 }
