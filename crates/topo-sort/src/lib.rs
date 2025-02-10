@@ -154,7 +154,7 @@ where
   }
 }
 
-pub fn run<V>(visitor: &mut V, mut work: Work<V::Elem>) -> TopoSort<V::Set, V::Elem>
+pub fn run<V>(visitor: &mut V, mut work: Work<V::Elem>) -> Ret<V::Set, V::Elem>
 where
   V: Visitor,
 {
@@ -196,11 +196,11 @@ where
   }
   always!(level_idx == 0, "should return to starting level");
   always!(cur.is_empty(), "should have no progress when done");
-  TopoSort { done, cycle }
+  Ret { done, cycle }
 }
 
 #[derive(Debug)]
-pub struct TopoSort<S, T> {
+pub struct Ret<S, T> {
   pub done: S,
   pub cycle: Option<T>,
 }
