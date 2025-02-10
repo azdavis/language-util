@@ -4,6 +4,10 @@ Various utility crates that might be useful when implementing a programming lang
 
 Many of these crates used to be from [c0ls][] or [Millet][], but they are generic enough that they were moved out of it so that they may be re-used in other language servers.
 
+## `always`
+
+Assert, but only in debug mode. Otherwise just log.
+
 ## `apply-changes`
 
 Apply a sequence of text changes to a text.
