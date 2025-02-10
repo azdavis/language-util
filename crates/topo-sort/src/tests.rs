@@ -1,4 +1,4 @@
-use crate::{get, CycleError, Graph};
+use crate::graph::{get, Graph};
 
 fn check(graph: &Graph<u32>, order: &[u32]) {
   assert_eq!(get(graph).unwrap(), order);
@@ -6,7 +6,7 @@ fn check(graph: &Graph<u32>, order: &[u32]) {
 
 fn check_cycle(graph: &Graph<u32>) {
   let err = get(graph).unwrap_err();
-  assert!(matches!(err, CycleError(_)));
+  let _ = err.witness();
 }
 
 fn mk_graph(g: &[(u32, &[u32])]) -> Graph<u32> {

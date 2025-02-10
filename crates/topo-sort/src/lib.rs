@@ -1,75 +1,206 @@
 //! Topological sorting.
 
+#![allow(missing_docs)]
+
 #[cfg(test)]
 mod tests;
 
-use std::collections::{BTreeMap, BTreeSet};
-use std::fmt;
+pub mod graph;
 
-/// A graph, represented as a map between nodes and their neighbors.
-pub type Graph<T> = BTreeMap<T, BTreeSet<T>>;
+use always::always;
+use std::collections::{BTreeSet, HashSet};
+use std::hash::{BuildHasherDefault, Hash, Hasher};
 
-/// Returns a reverse topological ordering of the graph.
-///
-/// # Errors
-///
-/// If the graph has a cycle.
-///
-/// # Panics
-///
-/// On internal error.
-pub fn get<T>(graph: &Graph<T>) -> Result<Vec<T>, CycleError<T>>
+#[derive(Debug)]
+pub enum ActionKind {
+  Start,
+  End,
+}
+
+#[derive(Debug)]
+pub struct Action<T>(pub T, pub ActionKind);
+
+impl<T> Action<T> {
+  pub const fn start(value: T) -> Self {
+    Self(value, ActionKind::Start)
+  }
+
+  pub const fn end(value: T) -> Self {
+    Self(value, ActionKind::End)
+  }
+}
+
+#[derive(Debug)]
+pub struct Work<T>(Vec<Action<T>>);
+
+impl<T> Work<T> {
+  pub fn push(&mut self, value: T) {
+    self.0.push(Action::start(value));
+  }
+}
+
+impl<T> Default for Work<T> {
+  fn default() -> Self {
+    Self(Vec::new())
+  }
+}
+
+impl<T> Extend<T> for Work<T> {
+  fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+    for x in iter {
+      self.push(x);
+    }
+  }
+}
+
+impl<T> FromIterator<T> for Work<T> {
+  fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+    let mut ret = Work::default();
+    ret.extend(iter);
+    ret
+  }
+}
+
+pub trait Visitor {
+  type Elem: Copy;
+  type Data;
+  type Set: Set<Self::Elem>;
+  fn enter(&self, value: Self::Elem) -> Option<Self::Data>;
+  fn process(&mut self, value: Self::Elem, data: Self::Data, work: &mut Work<Self::Elem>);
+  fn exit(&mut self, value: Self::Elem, level_idx: usize);
+}
+
+pub trait Set<T> {
+  fn new() -> Self;
+  fn contains(&self, value: T) -> bool;
+  fn insert(&mut self, value: T) -> bool;
+  fn remove(&mut self, value: T) -> bool;
+  fn is_empty(&self) -> bool;
+}
+
+impl<T> Set<T> for BTreeSet<T>
 where
-  T: Copy + Eq + Ord,
+  T: Ord,
 {
-  let mut active = BTreeSet::new();
-  let mut done = BTreeSet::new();
-  let mut ret = Vec::with_capacity(graph.len());
-  let mut stack: Vec<_> = graph.keys().map(|&x| (Action::Start, x)).collect();
-  while let Some((ac, cur)) = stack.pop() {
-    match ac {
-      Action::Start => {
-        if done.contains(&cur) {
+  fn new() -> Self {
+    BTreeSet::new()
+  }
+
+  fn contains(&self, value: T) -> bool {
+    self.contains(&value)
+  }
+
+  fn insert(&mut self, value: T) -> bool {
+    self.insert(value)
+  }
+
+  fn remove(&mut self, value: T) -> bool {
+    self.remove(&value)
+  }
+
+  fn is_empty(&self) -> bool {
+    self.is_empty()
+  }
+}
+
+impl<T, S> Set<T> for HashSet<T, BuildHasherDefault<S>>
+where
+  T: Hash + Eq,
+  S: Hasher + Default,
+{
+  fn new() -> Self {
+    HashSet::default()
+  }
+
+  fn contains(&self, value: T) -> bool {
+    self.contains(&value)
+  }
+
+  fn insert(&mut self, value: T) -> bool {
+    self.insert(value)
+  }
+
+  fn remove(&mut self, value: T) -> bool {
+    self.remove(&value)
+  }
+
+  fn is_empty(&self) -> bool {
+    self.is_empty()
+  }
+}
+
+impl<T> Set<T> for HashSet<T, rustc_hash::FxBuildHasher>
+where
+  T: Hash + Eq,
+{
+  fn new() -> Self {
+    HashSet::default()
+  }
+
+  fn contains(&self, value: T) -> bool {
+    self.contains(&value)
+  }
+
+  fn insert(&mut self, value: T) -> bool {
+    self.insert(value)
+  }
+
+  fn remove(&mut self, value: T) -> bool {
+    self.remove(&value)
+  }
+
+  fn is_empty(&self) -> bool {
+    self.is_empty()
+  }
+}
+
+pub fn run<V>(visitor: &mut V, mut work: Work<V::Elem>) -> TopoSort<V::Set, V::Elem>
+where
+  V: Visitor,
+{
+  let mut cur = V::Set::new();
+  let mut done = V::Set::new();
+  // INVARIANT: `level_idx` == how many `End`s are in `work`.
+  let mut level_idx = 0usize;
+  let mut cycle = None::<V::Elem>;
+  while let Some(Action(value, kind)) = work.0.pop() {
+    match kind {
+      ActionKind::Start => {
+        if done.contains(value) {
           continue;
         }
-        if !active.insert(cur) {
-          return Err(CycleError(cur));
+        let Some(data) = visitor.enter(value) else { continue };
+        if !cur.insert(value) {
+          if cycle.is_none() {
+            cycle = Some(value);
+          }
+          continue;
         }
-        stack.push((Action::Finish, cur));
-        if let Some(ns) = graph.get(&cur) {
-          stack.extend(ns.iter().map(|&x| (Action::Start, x)));
-        }
+        work.0.push(Action::end(value));
+        level_idx += 1;
+        visitor.process(value, data, &mut work);
       }
-      Action::Finish => {
-        assert!(active.remove(&cur));
-        assert!(done.insert(cur));
-        ret.push(cur);
+      ActionKind::End => {
+        level_idx = match level_idx.checked_sub(1) {
+          None => {
+            always!(false, "`End` should have a matching `Start`");
+            continue;
+          }
+          Some(x) => x,
+        };
+        always!(cur.remove(value), "should only `End` when in `cur`");
+        always!(done.insert(value), "should not `End` if already done");
+        visitor.exit(value, level_idx);
       }
     }
   }
-  Ok(ret)
+  always!(level_idx == 0, "should return to starting level");
+  always!(cur.is_empty(), "should have no progress when done");
+  TopoSort { done, cycle }
 }
 
-/// An error when the graph contained a cycle.
 #[derive(Debug)]
-pub struct CycleError<T>(T);
-
-impl<T> CycleError<T> {
-  /// Returns one of the `T` involved in the cycle.
-  pub fn witness(self) -> T {
-    self.0
-  }
-}
-
-impl<T> fmt::Display for CycleError<T> {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "graph has a cycle")
-  }
-}
-
-impl<T> std::error::Error for CycleError<T> where T: std::fmt::Debug {}
-
-enum Action {
-  Start,
-  Finish,
+pub struct TopoSort<S, T> {
+  pub done: S,
+  pub cycle: Option<T>,
 }
