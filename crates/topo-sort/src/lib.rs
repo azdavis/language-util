@@ -20,7 +20,7 @@ impl<T> Work<T> {
   }
 
   /// Runs the sort on the elements with the visitor.
-  pub fn run<V>(mut self, visitor: &mut V) -> Ret<V::Set, V::Elem>
+  pub fn run<V>(mut self, visitor: &mut V) -> Ret<V::Set, T>
   where
     T: Copy,
     V: Visitor<Elem = T>,
