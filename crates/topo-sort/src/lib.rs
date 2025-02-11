@@ -27,20 +27,19 @@ impl<T> Work<T> {
     V::Set: Set<T>,
   {
     let mut cur = V::Set::default();
-    let mut done = V::Set::default();
+    let mut ret = Ret { done: V::Set::default(), cycle: None::<T> };
     // INVARIANT: `level` == how many `End`s are in `work`.
     let mut level = 0usize;
-    let mut cycle = None::<T>;
     while let Some(Action(value, kind)) = self.0.pop() {
       match kind {
         ActionKind::Start => {
-          if done.contains(&value) {
+          if ret.done.contains(&value) {
             continue;
           }
           let Some(data) = visitor.enter(value.clone()) else { continue };
           if !cur.insert(value.clone()) {
-            if cycle.is_none() {
-              cycle = Some(value);
+            if ret.cycle.is_none() {
+              ret.cycle = Some(value);
             }
             continue;
           }
@@ -54,14 +53,14 @@ impl<T> Work<T> {
             0
           });
           always!(cur.remove(&value), "should only `End` when in `cur`");
-          always!(done.insert(value.clone()), "should not `End` if already done");
+          always!(ret.done.insert(value.clone()), "should not `End` if already done");
           visitor.exit(value, level);
         }
       }
     }
     always!(level == 0, "should return to starting level");
     always!(cur.is_empty(), "should have no progress when done");
-    Ret { done, cycle }
+    ret
   }
 }
 
