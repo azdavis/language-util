@@ -30,7 +30,7 @@ impl<T> Work<T> {
     let mut done = V::Set::default();
     // INVARIANT: `level_idx` == how many `End`s are in `work`.
     let mut level_idx = 0usize;
-    let mut cycle = None::<V::Elem>;
+    let mut cycle = None::<T>;
     while let Some(Action(value, kind)) = self.0.pop() {
       match kind {
         ActionKind::Start => {
