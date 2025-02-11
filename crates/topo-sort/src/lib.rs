@@ -28,7 +28,7 @@ impl<T> Work<T> {
   {
     let mut cur = V::Set::default();
     let mut ret = Ret { done: V::Set::default(), cycle: None::<T> };
-    // INVARIANT: `level` == how many `End`s are in `work`.
+    // INVARIANT: `level` == how many `End`s are in `self`.
     let mut level = 0usize;
     while let Some(action) = self.0.pop() {
       match action {
