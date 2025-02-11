@@ -49,13 +49,10 @@ impl<T> Work<T> {
           visitor.process(value, data, &mut self);
         }
         ActionKind::End => {
-          level_idx = match level_idx.checked_sub(1) {
-            None => {
-              always!(false, "`End` should have a matching `Start`");
-              0
-            }
-            Some(x) => x,
-          };
+          level_idx = level_idx.checked_sub(1).unwrap_or_else(|| {
+            always!(false, "`End` should have a matching `Start`");
+            0
+          });
           always!(cur.remove(&value), "should only `End` when in `cur`");
           always!(done.insert(value.clone()), "should not `End` if already done");
           visitor.exit(value, level_idx);
