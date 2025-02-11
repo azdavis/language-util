@@ -34,7 +34,7 @@ impl<T> Work<T> {
     while let Some(Action(value, kind)) = self.0.pop() {
       match kind {
         ActionKind::Start => {
-          if done.contains(value) {
+          if done.contains(&value) {
             continue;
           }
           let Some(data) = visitor.enter(value) else { continue };
@@ -56,7 +56,7 @@ impl<T> Work<T> {
             }
             Some(x) => x,
           };
-          always!(cur.remove(value), "should only `End` when in `cur`");
+          always!(cur.remove(&value), "should only `End` when in `cur`");
           always!(done.insert(value), "should not `End` if already done");
           visitor.exit(value, level_idx);
         }
@@ -119,11 +119,11 @@ pub trait Visitor {
 /// A set of T.
 pub trait Set<T>: Default {
   /// Returns whether the value is in the set.
-  fn contains(&self, value: T) -> bool;
+  fn contains(&self, value: &T) -> bool;
   /// Inserts the value into the set. Returns whether the value was newly inserted.
   fn insert(&mut self, value: T) -> bool;
   /// Removes the value into the set. Returns whether the value was previously in the set.
-  fn remove(&mut self, value: T) -> bool;
+  fn remove(&mut self, value: &T) -> bool;
   /// Returns whether the set is empty.
   fn is_empty(&self) -> bool;
 }
@@ -132,16 +132,16 @@ impl<T> Set<T> for BTreeSet<T>
 where
   T: Ord,
 {
-  fn contains(&self, value: T) -> bool {
-    self.contains(&value)
+  fn contains(&self, value: &T) -> bool {
+    self.contains(value)
   }
 
   fn insert(&mut self, value: T) -> bool {
     self.insert(value)
   }
 
-  fn remove(&mut self, value: T) -> bool {
-    self.remove(&value)
+  fn remove(&mut self, value: &T) -> bool {
+    self.remove(value)
   }
 
   fn is_empty(&self) -> bool {
@@ -154,16 +154,16 @@ where
   T: Hash + Eq,
   S: Hasher + Default,
 {
-  fn contains(&self, value: T) -> bool {
-    self.contains(&value)
+  fn contains(&self, value: &T) -> bool {
+    self.contains(value)
   }
 
   fn insert(&mut self, value: T) -> bool {
     self.insert(value)
   }
 
-  fn remove(&mut self, value: T) -> bool {
-    self.remove(&value)
+  fn remove(&mut self, value: &T) -> bool {
+    self.remove(value)
   }
 
   fn is_empty(&self) -> bool {
@@ -175,16 +175,16 @@ impl<T> Set<T> for HashSet<T, rustc_hash::FxBuildHasher>
 where
   T: Hash + Eq,
 {
-  fn contains(&self, value: T) -> bool {
-    self.contains(&value)
+  fn contains(&self, value: &T) -> bool {
+    self.contains(value)
   }
 
   fn insert(&mut self, value: T) -> bool {
     self.insert(value)
   }
 
-  fn remove(&mut self, value: T) -> bool {
-    self.remove(&value)
+  fn remove(&mut self, value: &T) -> bool {
+    self.remove(value)
   }
 
   fn is_empty(&self) -> bool {
