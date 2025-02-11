@@ -22,7 +22,7 @@ impl<T> Work<T> {
   /// Runs the sort on the elements with the visitor.
   pub fn run<V>(mut self, visitor: &mut V) -> Ret<V::Set, T>
   where
-    T: Copy,
+    T: Clone,
     V: Visitor<Elem = T>,
     V::Set: Set<T>,
   {
@@ -37,14 +37,14 @@ impl<T> Work<T> {
           if done.contains(&value) {
             continue;
           }
-          let Some(data) = visitor.enter(value) else { continue };
-          if !cur.insert(value) {
+          let Some(data) = visitor.enter(value.clone()) else { continue };
+          if !cur.insert(value.clone()) {
             if cycle.is_none() {
               cycle = Some(value);
             }
             continue;
           }
-          self.0.push(Action::end(value));
+          self.0.push(Action::end(value.clone()));
           level_idx += 1;
           visitor.process(value, data, &mut self);
         }
@@ -57,7 +57,7 @@ impl<T> Work<T> {
             Some(x) => x,
           };
           always!(cur.remove(&value), "should only `End` when in `cur`");
-          always!(done.insert(value), "should not `End` if already done");
+          always!(done.insert(value.clone()), "should not `End` if already done");
           visitor.exit(value, level_idx);
         }
       }
