@@ -16,7 +16,7 @@ pub struct Work<T>(Vec<Action<T>>);
 impl<T> Work<T> {
   /// Adds an element to be processed.
   pub fn push(&mut self, value: T) {
-    self.0.push(Action::start(value));
+    self.0.push(Action::Start(value));
   }
 
   /// Runs the sort on the elements with the visitor.
@@ -30,9 +30,9 @@ impl<T> Work<T> {
     let mut ret = Ret { done: V::Set::default(), cycle: None::<T> };
     // INVARIANT: `level` == how many `End`s are in `work`.
     let mut level = 0usize;
-    while let Some(Action(value, kind)) = self.0.pop() {
-      match kind {
-        ActionKind::Start => {
+    while let Some(action) = self.0.pop() {
+      match action {
+        Action::Start(value) => {
           if ret.done.contains(&value) {
             continue;
           }
@@ -43,11 +43,11 @@ impl<T> Work<T> {
             }
             continue;
           }
-          self.0.push(Action::end(value.clone()));
+          self.0.push(Action::End(value.clone()));
           level += 1;
           visitor.process(value, data, &mut self);
         }
-        ActionKind::End => {
+        Action::End(value) => {
           level = level.checked_sub(1).unwrap_or_else(|| {
             always!(false, "`End` should have a matching `Start`");
             0
@@ -189,20 +189,7 @@ where
 }
 
 #[derive(Debug)]
-enum ActionKind {
-  Start,
-  End,
-}
-
-#[derive(Debug)]
-struct Action<T>(T, ActionKind);
-
-impl<T> Action<T> {
-  fn start(value: T) -> Self {
-    Self(value, ActionKind::Start)
-  }
-
-  fn end(value: T) -> Self {
-    Self(value, ActionKind::End)
-  }
+enum Action<T> {
+  Start(T),
+  End(T),
 }
