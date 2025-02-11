@@ -28,8 +28,8 @@ impl<T> Work<T> {
   {
     let mut cur = V::Set::default();
     let mut done = V::Set::default();
-    // INVARIANT: `level_idx` == how many `End`s are in `work`.
-    let mut level_idx = 0usize;
+    // INVARIANT: `level` == how many `End`s are in `work`.
+    let mut level = 0usize;
     let mut cycle = None::<T>;
     while let Some(Action(value, kind)) = self.0.pop() {
       match kind {
@@ -45,21 +45,21 @@ impl<T> Work<T> {
             continue;
           }
           self.0.push(Action::end(value.clone()));
-          level_idx += 1;
+          level += 1;
           visitor.process(value, data, &mut self);
         }
         ActionKind::End => {
-          level_idx = level_idx.checked_sub(1).unwrap_or_else(|| {
+          level = level.checked_sub(1).unwrap_or_else(|| {
             always!(false, "`End` should have a matching `Start`");
             0
           });
           always!(cur.remove(&value), "should only `End` when in `cur`");
           always!(done.insert(value.clone()), "should not `End` if already done");
-          visitor.exit(value, level_idx);
+          visitor.exit(value, level);
         }
       }
     }
-    always!(level_idx == 0, "should return to starting level");
+    always!(level == 0, "should return to starting level");
     always!(cur.is_empty(), "should have no progress when done");
     Ret { done, cycle }
   }
@@ -109,8 +109,8 @@ pub trait Visitor {
   /// Processes the element and its data. Can add more things to visit to the work.
   fn process(&mut self, value: Self::Elem, data: Self::Data, work: &mut Work<Self::Elem>);
   /// Finishes processing an element. The number of other things still left to process is given as
-  /// `level_idx`.
-  fn exit(&mut self, value: Self::Elem, level_idx: usize);
+  /// `level`.
+  fn exit(&mut self, value: Self::Elem, level: usize);
 }
 
 /// A set of T.
