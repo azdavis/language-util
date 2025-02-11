@@ -52,7 +52,7 @@ impl<T> Work<T> {
           level_idx = match level_idx.checked_sub(1) {
             None => {
               always!(false, "`End` should have a matching `Start`");
-              continue;
+              0
             }
             Some(x) => x,
           };
