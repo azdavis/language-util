@@ -24,7 +24,7 @@ impl<T> Work<T> {
   where
     T: Clone,
     V: Visitor<Elem = T>,
-    V::Set: Set<T>,
+    V::Set: Set<Elem = T>,
   {
     let mut cur = V::Set::default();
     let mut ret = Ret { done: V::Set::default(), cycle: None::<T> };
@@ -112,31 +112,35 @@ pub trait Visitor {
   fn exit(&mut self, value: Self::Elem, level: usize);
 }
 
-/// A set of T.
-pub trait Set<T>: Default {
+/// A set of elements.
+pub trait Set: Default {
+  /// The type of elements.
+  type Elem;
   /// Returns whether the value is in the set.
-  fn contains(&self, value: &T) -> bool;
+  fn contains(&self, value: &Self::Elem) -> bool;
   /// Inserts the value into the set. Returns whether the value was newly inserted.
-  fn insert(&mut self, value: T) -> bool;
+  fn insert(&mut self, value: Self::Elem) -> bool;
   /// Removes the value into the set. Returns whether the value was previously in the set.
-  fn remove(&mut self, value: &T) -> bool;
+  fn remove(&mut self, value: &Self::Elem) -> bool;
   /// Returns whether the set is empty.
   fn is_empty(&self) -> bool;
 }
 
-impl<T> Set<T> for BTreeSet<T>
+impl<T> Set for BTreeSet<T>
 where
   T: Ord,
 {
-  fn contains(&self, value: &T) -> bool {
+  type Elem = T;
+
+  fn contains(&self, value: &Self::Elem) -> bool {
     self.contains(value)
   }
 
-  fn insert(&mut self, value: T) -> bool {
+  fn insert(&mut self, value: Self::Elem) -> bool {
     self.insert(value)
   }
 
-  fn remove(&mut self, value: &T) -> bool {
+  fn remove(&mut self, value: &Self::Elem) -> bool {
     self.remove(value)
   }
 
@@ -145,20 +149,22 @@ where
   }
 }
 
-impl<T, S> Set<T> for HashSet<T, BuildHasherDefault<S>>
+impl<T, S> Set for HashSet<T, BuildHasherDefault<S>>
 where
   T: Hash + Eq,
   S: Hasher + Default,
 {
-  fn contains(&self, value: &T) -> bool {
+  type Elem = T;
+
+  fn contains(&self, value: &Self::Elem) -> bool {
     self.contains(value)
   }
 
-  fn insert(&mut self, value: T) -> bool {
+  fn insert(&mut self, value: Self::Elem) -> bool {
     self.insert(value)
   }
 
-  fn remove(&mut self, value: &T) -> bool {
+  fn remove(&mut self, value: &Self::Elem) -> bool {
     self.remove(value)
   }
 
@@ -167,19 +173,21 @@ where
   }
 }
 
-impl<T> Set<T> for HashSet<T, rustc_hash::FxBuildHasher>
+impl<T> Set for HashSet<T, rustc_hash::FxBuildHasher>
 where
   T: Hash + Eq,
 {
-  fn contains(&self, value: &T) -> bool {
+  type Elem = T;
+
+  fn contains(&self, value: &Self::Elem) -> bool {
     self.contains(value)
   }
 
-  fn insert(&mut self, value: T) -> bool {
+  fn insert(&mut self, value: Self::Elem) -> bool {
     self.insert(value)
   }
 
-  fn remove(&mut self, value: &T) -> bool {
+  fn remove(&mut self, value: &Self::Elem) -> bool {
     self.remove(value)
   }
 
