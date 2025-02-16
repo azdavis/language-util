@@ -11,12 +11,14 @@ use std::hash::{BuildHasherDefault, Hash, Hasher};
 
 /// The work to do.
 #[derive(Debug)]
-pub struct Work<T>(Vec<Action<T>>);
+pub struct Work<T> {
+  actions: Vec<Action<T>>,
+}
 
 impl<T> Work<T> {
   /// Adds an element to be processed.
   pub fn push(&mut self, value: T) {
-    self.0.push(Action::Start(value));
+    self.actions.push(Action::Start(value));
   }
 
   /// Runs the sort on the elements with the visitor.
@@ -30,7 +32,7 @@ impl<T> Work<T> {
     let mut ret = Ret { done: V::Set::default(), cycle: None::<T> };
     // INVARIANT: `level` == how many `End`s are in `self`.
     let mut level = 0usize;
-    while let Some(action) = self.0.pop() {
+    while let Some(action) = self.actions.pop() {
       match action {
         Action::Start(value) => {
           if ret.done.contains(&value) {
@@ -43,7 +45,7 @@ impl<T> Work<T> {
             }
             continue;
           }
-          self.0.push(Action::End(value.clone()));
+          self.actions.push(Action::End(value.clone()));
           level += 1;
           visitor.process(value, data, &mut self);
         }
@@ -66,7 +68,7 @@ impl<T> Work<T> {
 
 impl<T> Default for Work<T> {
   fn default() -> Self {
-    Self(Vec::new())
+    Self { actions: Vec::new() }
   }
 }
 
