@@ -108,7 +108,7 @@ impl PositionDb {
   }
 
   /// Returns an iterator over the lines in the range.
-  pub fn lines(&self, range: TextRange) -> impl Iterator<Item = TextRange> + '_ {
+  pub fn lines(&self, range: TextRange) -> impl Iterator<Item = TextRange> {
     self.inner.lines(range)
   }
 

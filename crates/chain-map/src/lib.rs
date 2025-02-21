@@ -4,7 +4,7 @@
 //!
 //! [1]: https://docs.python.org/3/library/collections.html#collections.ChainMap
 
-use fast_hash::{map, FxHashMap, FxHashSet};
+use fast_hash::{FxHashMap, FxHashSet, map};
 use std::borrow::Borrow;
 use std::hash::Hash;
 
@@ -57,10 +57,12 @@ where
     let is_len_one = self.stack.len() == 1;
     let mut iter = self.stack.iter().rev().flat_map(|x| x.iter());
     let mut seen = FxHashSet::<&K>::default();
-    std::iter::from_fn(move || loop {
-      let (k, v) = iter.next()?;
-      if is_len_one || seen.insert(k) {
-        return Some((k, v));
+    std::iter::from_fn(move || {
+      loop {
+        let (k, v) = iter.next()?;
+        if is_len_one || seen.insert(k) {
+          return Some((k, v));
+        }
       }
     })
   }
@@ -95,7 +97,7 @@ where
   }
 
   /// Returns a draining iterator over the keys and values.
-  pub fn drain(&mut self) -> impl Iterator<Item = (K, V)> + '_ {
+  pub fn drain(&mut self) -> impl Iterator<Item = (K, V)> {
     self.consolidate_().drain()
   }
 

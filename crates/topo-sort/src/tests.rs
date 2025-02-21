@@ -1,4 +1,4 @@
-use crate::graph::{get, Graph};
+use crate::graph::{Graph, get};
 
 fn check(graph: &Graph<u32>, order: &[u32]) {
   assert_eq!(get(graph).unwrap(), order);

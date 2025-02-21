@@ -1,5 +1,5 @@
 use crate::token::ident;
-use crate::util::{unwrap_node, unwrap_token, Cx};
+use crate::util::{Cx, unwrap_node, unwrap_token};
 use fast_hash::FxHashSet;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};

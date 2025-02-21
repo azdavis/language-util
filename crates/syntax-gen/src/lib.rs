@@ -50,7 +50,7 @@ pub struct Options<'a, S> {
 /// # Panics
 ///
 /// If this process failed.
-pub fn gen<S>(opts: &Options<'_, S>)
+pub fn get<S>(opts: &Options<'_, S>)
 where
   S: BuildHasher,
 {
