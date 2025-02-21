@@ -14,7 +14,7 @@ pub(crate) fn get(
     pub type SyntaxNodePtr = rowan::ast::SyntaxNodePtr<#lang>;
 
     #[allow(unused)]
-    fn tokens<P>(parent: &P, kind: SK) -> impl Iterator<Item = SyntaxToken>
+    fn tokens<P>(parent: &P, kind: SK) -> impl Iterator<Item = SyntaxToken> + use<P>
     where
       P: AstNode<Language = #lang>,
     {
@@ -26,7 +26,7 @@ pub(crate) fn get(
     }
 
     #[allow(unused)]
-    fn token_children<P, C>(parent: &P) -> impl Iterator<Item = C>
+    fn token_children<P, C>(parent: &P) -> impl Iterator<Item = C> + use<P, C>
     where
       P: AstNode<Language = #lang>,
       SyntaxToken: TryInto<C>,
@@ -39,7 +39,7 @@ pub(crate) fn get(
     }
 
     #[allow(unused)]
-    fn node_children<P, C>(parent: &P) -> impl Iterator<Item = C>
+    fn node_children<P, C>(parent: &P) -> impl Iterator<Item = C> + use<P, C>
     where
       P: AstNode<Language = #lang>,
       C: AstNode<Language = #lang>,

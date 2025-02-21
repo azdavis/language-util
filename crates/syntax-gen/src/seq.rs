@@ -133,7 +133,7 @@ fn field<'cx>(cx: &'cx Cx, counts: &mut Counts<&'cx str>, mut rule: &Rule) -> To
   let body: TokenStream;
   match modifier {
     Modifier::Repeated => {
-      ret_ty = quote! { impl Iterator<Item = #base_ty> };
+      ret_ty = quote! { impl Iterator<Item = #base_ty> + use<> };
       body = base_body;
     }
     Modifier::Optional | Modifier::Regular => {
