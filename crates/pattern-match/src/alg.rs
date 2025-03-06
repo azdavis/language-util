@@ -53,6 +53,7 @@ fn get_pat_indices<L: Lang>(ac: &mut FxHashSet<L::PatIdx>, pat: &Pat<L>) {
   }
 }
 
+#[derive(Debug)]
 struct Useful<P> {
   /// invariant: no Pat will be Or
   witnesses: Vec<Vec<P>>,
