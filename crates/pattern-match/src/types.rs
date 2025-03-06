@@ -102,6 +102,16 @@ impl<L: Lang> fmt::Debug for Pat<L> {
   }
 }
 
+impl<L> fmt::Display for Pat<L>
+where
+  L: Lang,
+  L::Con: fmt::Display,
+{
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fmt::Display::fmt(&self.raw, f)
+  }
+}
+
 impl<L: Lang> Clone for Pat<L> {
   fn clone(&self) -> Self {
     Self { raw: self.raw.clone(), idx: self.idx }
@@ -152,6 +162,27 @@ impl<L: Lang> fmt::Debug for RawPat<L> {
   }
 }
 
+impl<L> fmt::Display for RawPat<L>
+where
+  L: Lang,
+  L::Con: fmt::Display,
+{
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    match self {
+      RawPat::Con(con) => fmt::Display::fmt(con, f),
+      RawPat::Or(pats) => {
+        let mut iter = pats.iter();
+        let Some(fst) = iter.next() else { return f.write_str("<NEVER>") };
+        write!(f, "{fst}")?;
+        for pat in iter {
+          write!(f, " | {pat}")?;
+        }
+        Ok(())
+      }
+    }
+  }
+}
+
 impl<L: Lang> Clone for RawPat<L> {
   fn clone(&self) -> Self {
     match self {
@@ -172,6 +203,26 @@ pub struct ConPat<L: Lang> {
 impl<L: Lang> fmt::Debug for ConPat<L> {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     f.debug_struct("ConPat").field("con", &self.con).field("args", &self.args).finish()
+  }
+}
+
+impl<L> fmt::Display for ConPat<L>
+where
+  L: Lang,
+  L::Con: fmt::Display,
+{
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fmt::Display::fmt(&self.con, f)?;
+    let mut iter = self.args.iter();
+    if let Some(fst) = iter.next() {
+      f.write_str("(")?;
+      write!(f, "{fst}")?;
+      for arg in iter {
+        write!(f, ", {arg}")?;
+      }
+      f.write_str(")")?;
+    }
+    Ok(())
   }
 }
 

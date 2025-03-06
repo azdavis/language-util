@@ -27,6 +27,34 @@ impl<L: Lang> fmt::Debug for Matrix<L> {
   }
 }
 
+impl<L> fmt::Display for Matrix<L>
+where
+  L: Lang,
+  L::Con: fmt::Display,
+{
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    let mut first = true;
+    for row in &self.rows {
+      if !first {
+        f.write_str("\n")?;
+        first = false;
+      }
+      f.write_str("<")?;
+      match row {
+        Row::Empty => {}
+        Row::NonEmpty(row) => {
+          for pat in &row.pats {
+            write!(f, "{pat}, ")?;
+          }
+          fmt::Display::fmt(&row.con_pat, f)?;
+        }
+      }
+      f.write_str(">")?;
+    }
+    Ok(())
+  }
+}
+
 impl<L: Lang> Matrix<L> {
   /// Returns the number of rows.
   pub(crate) fn num_rows(&self) -> usize {
