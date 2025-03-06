@@ -9,11 +9,11 @@ pub type Result<T, E = CheckError> = std::result::Result<T, E>;
 
 /// An error that occurred while checking.
 #[derive(Debug)]
-pub struct CheckError;
+pub struct CheckError(pub &'static str);
 
 impl fmt::Display for CheckError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    f.write_str("could not check pattern match")
+    write!(f, "could not check pattern match: {}", self.0)
   }
 }
 

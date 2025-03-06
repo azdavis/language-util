@@ -144,7 +144,7 @@ fn specialize<L: Lang>(
 ) -> Result<Option<TypedPatVec<L>>> {
   let ret = if L::covers(&pat.con, &L::any()) {
     if !pat.args.is_empty() {
-      return Err(CheckError);
+      return Err(CheckError("pat args was not empty"));
     }
     let tys = L::get_arg_tys(cx, ty, val_con)?;
     let ret: Vec<_> = tys.into_iter().map(|t| (Pat::any_no_idx(), t)).rev().collect();
@@ -152,7 +152,7 @@ fn specialize<L: Lang>(
   } else if L::covers(&pat.con, val_con) {
     let tys = L::get_arg_tys(cx, ty, val_con)?;
     if tys.len() < pat.args.len() {
-      return Err(CheckError);
+      return Err(CheckError("too few arg tys for pat"));
     }
     // the `>` case can happen in the case of e.g. record patterns with missing labels.
     let mut ret: Vec<_> =
