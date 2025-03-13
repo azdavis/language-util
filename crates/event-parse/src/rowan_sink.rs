@@ -6,17 +6,20 @@ use token::{Token, Triviable};
 
 /// The sink, which wraps a Rowan `GreenNodeBuilder`.
 #[derive(Debug)]
-pub struct RowanSink<E> {
+pub struct RowanSink<K, E> {
   builder: GreenNodeBuilder<'static>,
-  range: TextRange,
-  errors: Vec<Error<E>>,
+  cur: (TextRange, Option<K>),
+  errors: Vec<Error<K, E>>,
   no_range: Vec<E>,
 }
 
-impl<E> RowanSink<E> {
+impl<K, E> RowanSink<K, E>
+where
+  K: Clone,
+{
   /// Finish the builder.
   #[must_use]
-  pub fn finish<L>(mut self) -> (SyntaxNode<L>, Vec<Error<E>>)
+  pub fn finish<L>(mut self) -> (SyntaxNode<L>, Vec<Error<K, E>>)
   where
     L: Language,
   {
@@ -26,37 +29,41 @@ impl<E> RowanSink<E> {
   }
 
   fn extend_errors(&mut self) {
-    let errors =
-      std::mem::take(&mut self.no_range).into_iter().map(|kind| Error { range: self.range, kind });
+    let errors = std::mem::take(&mut self.no_range).into_iter().map(|inner| Error {
+      range: self.cur.0,
+      kind: self.cur.1.clone(),
+      inner,
+    });
     self.errors.extend(errors);
   }
 }
 
-impl<E> Default for RowanSink<E> {
+impl<K, E> Default for RowanSink<K, E> {
   fn default() -> Self {
     Self {
       builder: GreenNodeBuilder::default(),
-      range: TextRange::empty(0.into()),
+      cur: (TextRange::empty(0.into()), None),
       errors: Vec::new(),
       no_range: Vec::new(),
     }
   }
 }
 
-impl<K, E> Sink<K, E> for RowanSink<E>
+impl<K, E> Sink<K, E> for RowanSink<K, E>
 where
-  K: Into<SyntaxKind> + Triviable,
+  K: Into<SyntaxKind> + Triviable + Clone,
 {
   fn enter(&mut self, kind: K) {
     self.builder.start_node(kind.into());
   }
 
   fn token(&mut self, token: Token<'_, K>) {
+    let kind = token.kind.clone();
     let is_trivia = token.kind.is_trivia();
     self.builder.token(token.kind.into(), token.text);
-    let start = self.range.end();
+    let start = self.cur.0.end();
     let end = start + TextSize::of(token.text);
-    self.range = TextRange::new(start, end);
+    self.cur = (TextRange::new(start, end), Some(kind));
     if !is_trivia {
       self.extend_errors();
     }
@@ -73,9 +80,11 @@ where
 
 /// An error.
 #[derive(Debug, Clone)]
-pub struct Error<E> {
+pub struct Error<K, E> {
   /// The range.
   pub range: TextRange,
-  /// The kind.
-  pub kind: E,
+  /// The syntax kind.
+  pub kind: Option<K>,
+  /// The inner error.
+  pub inner: E,
 }
