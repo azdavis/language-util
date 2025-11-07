@@ -144,7 +144,7 @@ fn field<'cx>(cx: &'cx Cx, counts: &mut Counts<&'cx str>, mut rule: &Rule) -> To
         quote! { #base_body.nth(#idx) }
       };
     }
-  };
+  }
   quote! {
     pub fn #field_name(&self) -> #ret_ty {
       #body

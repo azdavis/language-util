@@ -167,13 +167,13 @@ impl CleanPathBuf {
   }
 
   fn new_from_path(path: &Path) -> Option<Self> {
-    path.is_absolute().then(|| Self::new_unchecked(path))
+    path.is_absolute().then(|| Self::new_from_absolute(path))
   }
 
   /// requires the `Path` is already known to be absolute
   ///
   /// largely lifted from cargo
-  fn new_unchecked(path: &Path) -> Self {
+  fn new_from_absolute(path: &Path) -> Self {
     debug_assert!(path.is_absolute());
 
     let mut components = path.components().peekable();
@@ -254,7 +254,7 @@ impl CleanPathBuf {
   /// ```
   pub fn push<P: AsRef<Path>>(&mut self, path: P) {
     self.0.push(path);
-    *self = Self::new_unchecked(self.as_path());
+    *self = Self::new_from_absolute(self.as_path());
   }
 }
 

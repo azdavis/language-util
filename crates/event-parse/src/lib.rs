@@ -105,7 +105,6 @@ impl<'a, K, E> Parser<'a, K, E> {
   /// On internal error.
   pub fn precede(&mut self, ex: Exited) -> Entered {
     let ret = self.enter();
-    #[allow(clippy::match_on_vec_items)]
     match self.events[ex.ev_idx] {
       Some(Event::Enter(_, ref mut parent)) => {
         assert!(parent.is_none());
@@ -294,11 +293,11 @@ where
     }
     assert_eq!(levels, 0);
     // give an empty node for the empty parse
-    if self.tok_idx == 0 {
-      if let Some(fst) = fst {
-        sink.enter(fst);
-        sink.exit();
-      }
+    if self.tok_idx == 0
+      && let Some(fst) = fst
+    {
+      sink.enter(fst);
+      sink.exit();
     }
   }
 }

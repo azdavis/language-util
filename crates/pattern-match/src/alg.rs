@@ -126,10 +126,10 @@ fn useful<L: Lang>(
       }
     }
   }
-  if let Some(idx) = idx {
-    if !ret.witnesses.is_empty() {
-      ac.remove(&idx);
-    }
+  if let Some(idx) = idx
+    && !ret.witnesses.is_empty()
+  {
+    ac.remove(&idx);
   }
   Ok(ret)
 }
