@@ -95,7 +95,8 @@ pub type PathSet = nohash_hasher::IntSet<PathId>;
 
 /// A clean path.
 ///
-/// "Clean" paths are absolute and contain no `.` or `..`.
+/// "Clean" paths are absolute, contain no `.` or `..`, repeated adjacent path separators, or
+/// trailing path separators.
 ///
 /// They may, however, not be canonical because of symlinks.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -111,21 +112,6 @@ impl ToOwned for CleanPath {
 }
 
 impl CleanPath {
-  /// Returns the input as a [`CleanPath`] if it is indeed one.
-  #[must_use]
-  pub fn new(path: &Path) -> Option<&Self> {
-    if !path.is_absolute() {
-      return None;
-    }
-    for component in path.components() {
-      match component {
-        Component::Prefix(_) | Component::RootDir | Component::Normal(_) => {}
-        Component::CurDir | Component::ParentDir => return None,
-      }
-    }
-    Some(Self::new_unchecked(path))
-  }
-
   fn new_unchecked(path: &Path) -> &Self {
     let ptr = std::ptr::from_ref(path) as *const CleanPath;
     // SAFETY: CleanPath is repr(transparent)ly Path
